@@ -44,6 +44,10 @@ struct env_t *init_env(void){
 }
 
 void destroy_env(struct env_t *env){
+    if(env->ref_cnt > 0){
+        env->ref_cnt--;
+        return;
+    }
     for(int i=0; i<env->next; i++){
         free_env_slot(env, i);
     }

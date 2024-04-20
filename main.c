@@ -153,6 +153,7 @@ struct Gen_type_t *apply(struct Gen_type_t *op, struct Gen_type_t **args, struct
 
 struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
     root->env = env;
+    env->ref_cnt++;
     if(AST_Node_isleaf(root)){
         if(root->token.type == TOKEN_REGULAR){
             struct env_entry *bd_entry = lookup_env(env, root->token.tok);
@@ -180,6 +181,8 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
         }else{
             root->gen_val = token2gen(&(root->token));
         }
+
+        root->isleaf = 1;
         return root->gen_val;
     }else{
         struct Gen_type_t *args[64];
@@ -224,6 +227,12 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
                             if(args[i] == NULL)
                                 break;
                         }
+                    }
+
+                    local_exp->isleaf = 1;
+                    for(int i=0; i<64; i++){
+                        if(local_exp->ops[i] != NULL)
+                            local_exp->isleaf &= local_exp->ops[i]->isleaf;
                     }
                     break;
                 case ENVOP_SET:

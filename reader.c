@@ -191,7 +191,8 @@ void AST_destroy(struct AST_Node *root){
             AST_destroy(root->ops[i]);
         }
     }
-    if(!is_global_env(root->env)){
+
+    if(root->env && !is_global_env(root->env)){
         destroy_env(root->env);
     }
 

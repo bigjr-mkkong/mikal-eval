@@ -23,6 +23,7 @@ struct env_t{
     struct env_entry *symmap[64];
     int next;
     struct env_t *fa_env;
+    int ref_cnt;
 };
 
 struct env_t *init_env(void);
