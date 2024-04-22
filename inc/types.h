@@ -11,7 +11,7 @@ enum Gen_types{
     TYPE_SYMBOL,  
     TYPE_OPERATOR,
     TYPE_PATEVAL_LIST,
-    TYPE_CONS
+    TYPE_PAIR
 };
 
 
@@ -24,8 +24,8 @@ struct Gen_type_t{
         struct Gen_type_t **pateval_list;
 
     } value;
-    struct Gen_type_t *consA;
-    struct Gen_type_t *consB;
+    struct Gen_type_t *car;
+    struct Gen_type_t *cdr;
     enum Gen_types type;
 };
 

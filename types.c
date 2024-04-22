@@ -6,6 +6,7 @@
 static char *arith_op[] = {"+", "-", "*", "/"};
 static char *env_op[] = {"def!", "let!", "set!"};
 static char *list_op[] = {"car", "cdr", "cons"};
+static char *io_op[] = {"print"};
 
 #include "types.h"
 
@@ -53,6 +54,15 @@ struct Gen_type_t *make_list(struct Gen_type_t **lst){
         ret->value.pateval_list[i] = lst[i];
     }
 
+    return ret;
+}
+
+/* make_pair will not allocate memory space for car and cdr */
+struct Gen_type_t *make_pair(struct Gen_type_t *car, struct Gen_type_t *cdr){
+    struct Gen_type_t *ret = (struct Gen_type_t*)malloc(sizeof(struct Gen_type_t));
+    ret->car = car;
+    ret->cdr = cdr;
+    ret->type = TYPE_PAIR;
     return ret;
 }
 
@@ -164,6 +174,9 @@ enum operation_type which_op(char *str){
     int lstlen_listop = sizeof(list_op) / sizeof(char*);
 
     enum operation_type op_type = OP_UNDEFINED;
+    if(str == NULL)
+        return op_type;
+
     for(int i=0; i<lstlen_arithop; i++){
         if(strcmp(str, arith_op[i]) == 0){
             op_type = OP_ARITH;
@@ -179,6 +192,7 @@ enum operation_type which_op(char *str){
     }
 
     for(int i=0; i<lstlen_listop; i++){
+
         if(strcmp(str, list_op[i]) == 0){
             op_type = OP_LIST;
             return op_type;

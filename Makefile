@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -O0 -lreadline -I./inc
+CFLAGS = -g -O0  -lreadline -I./inc
 LDFLAGS = -g
 SRCS = main.c reader.c env.c types.c
 

@@ -1,13 +1,20 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "types.h"
-#include "readline/readline.h"
 #include "reader.h"
+#include "readline/readline.h"
 #include "env.h"
 /*
  * TODO:
- * make "let" work
+ * Fix memory leak and segfault triggered by failed to evaluate
+ * input that will trigger SEGFAULT:
+ * 1. (2)
+ * 2. (let! ((x 1)) x)
+ *
+ * Implement CONS, CAR, and CDR
+ * Implement some IO functions
  */
+struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env);
 
 struct Gen_type_t *mikal_add(struct Gen_type_t **list_add){
     struct Gen_type_t *adder = NULL;
@@ -88,7 +95,7 @@ struct Gen_type_t *mikal_div(struct Gen_type_t **list_div){
     return result;
 }
 
-struct env_t *env_apply(enum env_op_type op, struct Gen_type_t **name, struct Gen_type_t **value, struct env_t *env){
+struct env_t *core_env_apply(enum env_op_type op, struct Gen_type_t **name, struct Gen_type_t **value, struct env_t *env){
     struct env_entry *target;
     char *sym_name;
     if(op == ENVOP_DEFINE){
@@ -130,6 +137,70 @@ struct env_t *env_apply(enum env_op_type op, struct Gen_type_t **name, struct Ge
     }
 }
 
+struct Gen_type_t *env_apply(struct AST_Node *root, struct Gen_type_t **args, struct env_t *env){
+    struct Gen_type_t *ret = NULL;
+    struct Gen_type_t *name[32];
+    struct Gen_type_t *value[32];
+    memset(name, 0, sizeof(void*) * 32);
+    memset(value, 0, sizeof(void*) * 32);
+    
+    enum env_op_type envop = which_envop(root->ops[0]->token.tok);
+    switch (envop){
+        case ENVOP_DEFINE:
+            name[0] = token2gen(&(root->ops[1]->token));
+            value[0] = eval(root->ops[2], env);
+            core_env_apply(envop, name, value, env);
+            destroy_gentype(name[0]);
+            break;
+        case ENVOP_LET:
+            struct AST_Node *let_pairs = root->ops[1];
+            struct AST_Node *local_exp = root->ops[2];
+            struct Token *name_tok;
+            for(int i=0; let_pairs->ops[i]; i++){
+                name_tok = &(let_pairs->ops[i]->ops[0]->token);
+                name[i] = token2gen(name_tok);
+                value[i] = eval(let_pairs->ops[i]->ops[1], env);
+            }
+            env = core_env_apply(envop, name, value, env);
+            
+            let_pairs->isleaf = 1;
+
+            for(int i=0; name[i]; i++){
+                destroy_gentype(name[i]);
+            }
+        
+            enum operation_type op_type = which_op(local_exp->ops[0]->token.tok);
+
+            if(op_type == OP_ENV || local_exp->isleaf){
+                args[0] = eval(local_exp, env);
+            }else{
+                for(int i=0; i<64; i++){
+                    if(local_exp->ops[i] != NULL){
+                        args[i] = eval(local_exp->ops[i], env);
+                        if(args[i] == NULL)
+                            break;
+                    }
+                }
+            }
+
+            local_exp->isleaf = 1;
+            for(int i=0; i<64; i++){
+                local_exp->isleaf &= (local_exp->ops[i]?local_exp->ops[i]->isleaf:1);
+            }
+            break;
+        case ENVOP_SET:
+            name[0] = token2gen(&(root->ops[1]->token));
+            value[0] = eval(root->ops[2], env);
+            core_env_apply(envop, name, value, env);
+            destroy_gentype(name[0]);
+            break;
+        case ENVOP_UNDEFINED:
+            fprintf(stderr, "environment operation undefined\n");
+            break;
+    }
+    return ret;
+}
+
 struct Gen_type_t *apply(struct Gen_type_t *op, struct Gen_type_t **args, struct env_t *env){
     struct env_entry *ent;
     struct Gen_type_t *ret = NULL;
@@ -154,11 +225,12 @@ struct Gen_type_t *apply(struct Gen_type_t *op, struct Gen_type_t **args, struct
 struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
     root->env = env;
     env->ref_cnt++;
+    enum operation_type op_type;
     if(AST_Node_isleaf(root)){
         if(root->token.type == TOKEN_REGULAR){
             struct env_entry *bd_entry = lookup_env(env, root->token.tok);
             if(bd_entry == NULL){
-                fprintf(stderr, "Symbol didn't bind with any value\n");
+                fprintf(stderr, "Symbol \"%s\" didn't bind with any value\n", root->token.tok);
                 return NULL;
             }
             
@@ -188,64 +260,11 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
         struct Gen_type_t *args[64];
         struct Gen_type_t *eval_result;
         memset(args, 0, sizeof(void*) * 64);
-       
-        struct Gen_type_t *name[32];
-        struct Gen_type_t *value[32];
-        memset(name, 0, sizeof(void*) * 32);
-        memset(value, 0, sizeof(void*) * 32);
-        enum operation_type op_type = which_op(root->ops[0]->token.tok);
+        op_type = which_op(root->ops[0]->token.tok);
+
         if(op_type == OP_ENV){
             //apply ops on env operation
-            enum env_op_type envop = which_envop(root->ops[0]->token.tok);
-            switch (envop){
-                case ENVOP_DEFINE:
-                    name[0] = token2gen(&(root->ops[1]->token));
-                    value[0] = eval(root->ops[2], env);
-                    env_apply(envop, name, value, env);
-                    destroy_gentype(name[0]);
-                    break;
-                case ENVOP_LET:
-                    struct AST_Node *let_pairs = root->ops[1];
-                    struct AST_Node *local_exp = root->ops[2];
-                    struct Token *name_tok;
-                    for(int i=0; let_pairs->ops[i]; i++){
-                        name_tok = &(let_pairs->ops[i]->ops[0]->token);
-                        name[i] = token2gen(name_tok);
-                        value[i] = eval(let_pairs->ops[i]->ops[1], env);
-                    }
-                    env = env_apply(envop, name, value, env);
-                    
-                    let_pairs->isleaf = 1;
-
-                    for(int i=0; name[i]; i++){
-                        destroy_gentype(name[i]);
-                    }
-
-                    for(int i=0; i<64; i++){
-                        if(local_exp->ops[i] != NULL){
-                            args[i] = eval(local_exp->ops[i], env);
-                            if(args[i] == NULL)
-                                break;
-                        }
-                    }
-
-                    local_exp->isleaf = 1;
-                    for(int i=0; i<64; i++){
-                        if(local_exp->ops[i] != NULL)
-                            local_exp->isleaf &= local_exp->ops[i]->isleaf;
-                    }
-                    break;
-                case ENVOP_SET:
-                    name[0] = token2gen(&(root->ops[1]->token));
-                    value[0] = eval(root->ops[2], env);
-                    env_apply(envop, name, value, env);
-                    destroy_gentype(name[0]);
-                    break;
-                case ENVOP_UNDEFINED:
-                    fprintf(stderr, "environment operation undefined\n");
-                    break;
-            }
-
+            env_apply(root, args, env);
         }else if(op_type == OP_LIST){
             //apply ops on list operation
         }else{
@@ -254,11 +273,10 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
                 if(root->ops[i] != NULL){
                     args[i] = eval(root->ops[i], env);
                     if(args[i] == NULL)
-                    return NULL;
+                        return NULL;
                 }
             }
         }
-        
         
         int root_isleaf = 1;
 
@@ -266,15 +284,21 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
             eval_result = make_list(args);
             root_isleaf = 0;
         }else{
-            eval_result = apply(args[0], &(args[1]), env);
-            if(eval_result == NULL){
-                return NULL;
+            op_type = which_op(args[0]->value.op);
+            if(op_type == OP_ENV){
+                env_apply(root, args, env);
+            }else if(op_type == OP_LIST){
+                //apply ops on list operation
+            }else{
+                eval_result = apply(args[0], &(args[1]), env);
+                if(eval_result == NULL){
+                    return NULL;
+                }
             }
         }
         
         for(int i=0; i<64; i++){
-            if(root->ops[i] != NULL)
-                root_isleaf &= root->ops[i]->isleaf;
+            root_isleaf &= (root->ops[i]?root->ops[i]->isleaf:1);
         }
 
         root->gen_val = eval_result;
