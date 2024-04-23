@@ -24,8 +24,10 @@ struct Gen_type_t{
         struct Gen_type_t **pateval_list;
 
     } value;
-    struct Gen_type_t *car;
-    struct Gen_type_t *cdr;
+    struct pair_t{
+        struct Gen_type_t *car;
+        struct Gen_type_t *cdr;
+    }pair;
     enum Gen_types type;
 };
 

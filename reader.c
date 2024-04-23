@@ -261,7 +261,7 @@ struct AST_Node *AST_create(struct Reader *tk_reader, int begin, int end){
    return AST_Node_create(NULL, ops, 0);
 }
 
-void print_list(struct Gen_type_t *lst){
+void print_pateval_list(struct Gen_type_t *lst){
     struct Token *tok;
     if(lst->type != TYPE_PATEVAL_LIST){
         tok = gen2token(lst);
@@ -272,12 +272,29 @@ void print_list(struct Gen_type_t *lst){
 
     printf("(");
     for(int i=0; lst->value.pateval_list[i]; i++){
-        print_list(lst->value.pateval_list[i]);
+        print_pateval_list(lst->value.pateval_list[i]);
         if(lst->value.pateval_list[i+1] != NULL)
             printf(" ");
     }
     printf(")");
 
+    return;
+}
+
+void print_pair_list(struct Gen_type_t *root){
+    struct Token *tok;
+    if(root->type != TYPE_PAIR){
+        tok = gen2token(root);
+        printf("%s", tok->tok);
+        free(tok);
+        return;
+    }
+
+    printf("(");
+    print_pair_list(root->pair.car);
+    printf(" . ");
+    print_pair_list(root->pair.cdr);
+    printf(")");
     return;
 }
 
@@ -292,7 +309,10 @@ void pr_str(struct AST_Node *pos){
         printf("%s", pos->token.tok);
         return;
     }else if(pos->gen_val->type == TYPE_PATEVAL_LIST){
-        print_list(pos->gen_val);
+        print_pateval_list(pos->gen_val);
+        return;
+    }else if(pos->gen_val->type == TYPE_PAIR){
+        print_pair_list(pos->gen_val);
         return;
     }
 

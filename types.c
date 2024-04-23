@@ -60,8 +60,8 @@ struct Gen_type_t *make_list(struct Gen_type_t **lst){
 /* make_pair will not allocate memory space for car and cdr */
 struct Gen_type_t *make_pair(struct Gen_type_t *car, struct Gen_type_t *cdr){
     struct Gen_type_t *ret = (struct Gen_type_t*)malloc(sizeof(struct Gen_type_t));
-    ret->car = car;
-    ret->cdr = cdr;
+    ret->pair.car = car;
+    ret->pair.cdr = cdr;
     ret->type = TYPE_PAIR;
     return ret;
 }

@@ -8,11 +8,9 @@
  * TODO:
  * Fix memory leak and segfault triggered by failed to evaluate
  * input that will trigger SEGFAULT:
- * 1. (2)
  * 2. (let! ((x 1)) x)
- *
+ * 3. (let! ((x 3)) (let! ((y 4)) (+ x y)))
  * Implement CONS, CAR, and CDR
- * Implement some IO functions
  */
 struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env);
 
@@ -93,6 +91,31 @@ struct Gen_type_t *mikal_div(struct Gen_type_t **list_div){
     result = make_integer(div1->value.integer / div2->value.integer);
 
     return result;
+}
+
+struct Gen_type_t *pair_cons(struct Gen_type_t **args){
+    struct Gen_type_t *car = args[0];
+    struct Gen_type_t *cdr = args[1];
+    struct Gen_type_t *pair = make_pair(car, cdr);
+    return pair;
+}
+
+struct Gen_type_t *pair_car(struct Gen_type_t **args){
+    struct Gen_type_t *pair = args[0];
+    if(pair->type != TYPE_PAIR){
+        fprintf(stderr, "Failed to car: not a pair\n");
+        return NULL;
+    }
+    return pair->value.pair.car;
+}
+
+struct Gen_type_t *pair_cdr(struct Gen_type_t **args){
+    struct Gen_type_t *pair = args[0];
+    if(pair->type != TYPE_PAIR){
+        fprintf(stderr, "Failed to cdr: not a pair\n");
+        return NULL;
+    }
+    return pair->value.pair.cdr;
 }
 
 struct env_t *core_env_apply(enum env_op_type op, struct Gen_type_t **name, struct Gen_type_t **value, struct env_t *env){
@@ -287,8 +310,6 @@ struct Gen_type_t *eval(struct AST_Node *root, struct env_t *env){
             op_type = which_op(args[0]->value.op);
             if(op_type == OP_ENV){
                 env_apply(root, args, env);
-            }else if(op_type == OP_LIST){
-                //apply ops on list operation
             }else{
                 eval_result = apply(args[0], &(args[1]), env);
                 if(eval_result == NULL){
