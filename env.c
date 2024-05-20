@@ -5,42 +5,58 @@
 
 //#define ENV_TEST
 
-static int alloc_env_slot(struct env_t *env){
+/*
+ * Return the new allocated index for given environemnt
+ */
+static URet alloc_env_slot(struct env_t *env){
+    URet ret;
     if(env->next > 64){
-        fprintf(stderr, "Envioronment is full :(\n");
+        ret.val = 0;
+        ret.error_code = E_NOSPACE_LEFT;
+        return ret;
     }
 
     int retval = env->next;
-    env->symmap[env->next] = (struct env_entry*)malloc(sizeof(struct env_entry));
-    memset(env->symmap[env->next], 0, sizeof(struct env_entry));
+    env->symmap[env->next] = (struct env_entry*)malloc(sizeof(mikal_t) * 2);
+    memset(env->symmap[env->next], 0, sizeof(struct env_entry) * 2);
     env->next++;
-    return retval;
+
+    ret.val = retval;
+    ret.error_code = GOOD;
+    return ret;
 }
 
-static void free_env_slot(struct env_t *env, int idx){
+static URet free_env_slot(struct env_t *env, int idx){
+    URet ret;
     if(idx >= 64){
-        fprintf(stderr, "Failed to free env slot: idx Out of Bound\n");
-        return;
+        ret.val = 0;
+        ret.error_code = E_OUTOFBOUND;
+        return ret;
     }
 
     if(env->symmap[idx] == NULL){
-        fprintf(stderr, "Failed to free env slot: double free\n");
-        return;
+        ret.val = 0;
+        ret.error_code = E_DOUBLE_FREE;
+        return ret;
     }
 
-    if(env->symmap[idx]->type == ENV_GENVAL){
-        destroy_gentype(env->symmap[idx]->value.gen_val);
-    }
     free(env->symmap[idx]);
     env->symmap[idx] = 0;
-    return ;
+
+    ret.val = 0;
+    ret.error_code = GOOD;
+    return ret;
 }
 
-struct env_t *init_env(void){
+URet init_env(void){
+    URet ret;
     struct env_t *ret_env = (struct env_t*)malloc(sizeof(struct env_t));
 
     ret_env->fa_env = 0;
-    return ret_env;
+
+    ret.addr = ret_env;
+    ret.error_code = GOOD;
+    return ret;
 }
 
 void destroy_env(struct env_t *env){
@@ -54,26 +70,27 @@ void destroy_env(struct env_t *env){
     free(env);
 }
 
-void add_env_function(struct env_t *env, char *name, struct Gen_type_t *(*func)(struct Gen_type_t **)){
+URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value){
+    URet ret;
+    if(!valid_mikal(symbol)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
     
-    int alloc_pt = alloc_env_slot(env);
-    strcpy(env->symmap[alloc_pt]->name, name);
-    env->symmap[alloc_pt]->value.func = func;
-    env->symmap[alloc_pt]->type = ENV_FUNC;
+    if(!valid_mikal(value)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
 
-    return;
-}
+    int alloc_pt = URet_val(alloc_env_slot(env), int);
+    memcpy(&(env->symmap[alloc_pt]->symbol), symbol, sizeof(mikal_t));
+    memcpy(&(env->symmap[alloc_pt]->value), value, sizeof(mikal_t));
 
-void add_env_integer(struct env_t *env, char *name, struct Gen_type_t *val){
-    int alloc_pt = alloc_env_slot(env);
-    strcpy(env->symmap[alloc_pt]->name, name);
-
-    env->symmap[alloc_pt]->value.gen_val = make_integer(0xdeadbeef);
-    memcpy(env->symmap[alloc_pt]->value.gen_val, val, sizeof(struct Gen_type_t));
-
-    env->symmap[alloc_pt]->type = ENV_GENVAL;
-    
-    return;
+    ret.val = 0;
+    ret.error_code = GOOD;
+    return ret;
 }
 
 void remove_env_entry(struct env_t *env, int idx){
@@ -81,49 +98,57 @@ void remove_env_entry(struct env_t *env, int idx){
     return;
 }
 
-struct env_entry *lookup_env(struct env_t *env, char *name){
+URet lookup_env(struct env_t *env, char *name){
+    URet ret;
     struct env_entry *env_ent;
 
-    int find = 0;
+    ret.val = 0;
+    ret.error_code = E_NOTFOUND;
     for(int i=0; i<64; i++){
         env_ent = env->symmap[i];
         if(env_ent == NULL){
             continue;
         }
-        if(strcmp(name, env_ent->name) == 0){
-            find = 1;
+        if(strcmp(name, env_ent->symbol.sym) == 0){
+            ret.error_code = E_NOTFOUND;
             break;
         }
     }
 
-    if(!find && is_global_env(env)){
-        return NULL;
-    }else if(!find){
+    if((URet_state(ret) == E_NOTFOUND) && is_global_env(env)){
+        return ret;
+    }else if(URet_state(ret) == E_NOTFOUND){
         return lookup_env(env->fa_env, name);
     }else{
-        return env_ent;
+        ret.val = (long long)(env_ent);
+        ret.error_code = GOOD;
+        return ret;
     }
 }
 
-struct env_entry *lookup_single_env(struct env_t *env,  char *name){
+URet lookup_single_env(struct env_t *env,  char *name){
+    URet ret;
     struct env_entry *env_ent;
 
-    int find = 0;
+    ret.error_code = E_UNDEF;
     for(int i=0; i<64; i++){
         env_ent = env->symmap[i];
         if(env_ent == NULL){
             continue;
         }
-        if(strcmp(name, env_ent->name) == 0){
-            find = 1;
+        if(strcmp(name, env_ent->symbol.sym) == 0){
+            ret.error_code = E_NOTFOUND;
             break;
         }
     }
 
-    if(!find){
-        return NULL;
+    if(URet_state(ret) == E_NOTFOUND){
+        ret.val = 0;
+        return ret;
     }else{
-        return env_ent;
+        ret.val = (long long)env_ent;
+        ret.error_code = GOOD;
+        return ret;
     }
 }
 
@@ -135,6 +160,7 @@ int is_global_env(struct env_t *env){
 
 int main(void){
     struct env_t *meta_env = init_env();
+    mikal_t *plus = make_operator("+");
     add_env_entry(meta_env, "+", &add);
     add_env_entry(meta_env, "-", &sub);
 
