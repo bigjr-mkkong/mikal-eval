@@ -22,9 +22,11 @@ struct Reader{
     int readpt;
 };
 
+#define MAX_CHILD       64
+
 struct AST_Node{
     struct Token token;
-    struct AST_Node *ops[64];
+    struct AST_Node *ops[MAX_CHILD];
 };
 
 void AST_destroy(struct AST_Node *root);

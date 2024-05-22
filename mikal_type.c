@@ -1,12 +1,14 @@
-//#define SINGLE_FILE_TEST
+//#define SINGTEST_MIKAL_TYPE
 
 #include "./inc/mikal_type.h"
 #include "stdlib.h"
 #include "string.h"
 #include "env.h"
 #include "stdio.h"
+#include "errno.h"
+#include "assert.h"
 
-enum mikal_op_type which_op(char *str);
+enum mikal_op_type which_op(char *str, struct env_t *env);
 
 static char *arith_op[] = {"+", "-", "*", "/"};
 static char *env_op[] = {"def!", "let!", "set!"};
@@ -167,7 +169,7 @@ URet make_ast(struct AST_Node *ast){
     return retval;
 }
 
-URet make_func(mikal_func func){
+URet make_func(mikal_func func, enum mikal_op_type type){
     URet retval;
 
     if(!func){
@@ -179,6 +181,7 @@ URet make_func(mikal_func func){
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
     ret->func = func;
     ret->type = MT_FUNC;
+    ret->op_type = type;
     ret->magic = MIKAL_MAGIC;
 
     retval.addr = ret;
@@ -312,7 +315,7 @@ int mikal_cmp(mikal_t *val1, mikal_t *val2){
     }
 }
 
-enum mikal_op_type which_op(char *str){
+enum mikal_op_type which_op(char *str, struct env_t *env){
     int lstlen_arithop = sizeof(arith_op) / sizeof(char*);
     int lstlen_envop = sizeof(env_op) / sizeof(char*);
     int lstlen_listop = sizeof(list_op) / sizeof(char*);
@@ -358,8 +361,15 @@ enum mikal_op_type which_op(char *str){
         }
     }
 
+    URet ret = lookup_env(env, str);
+    if(URet_state(ret) != GOOD)
+        return op_type;
 
-    return op_type;
+    mikal_t *func = URet_val(ret, mikal_t*);
+    if(func->type != MT_FUNC)
+        return op_type;
+    else
+        return func->op_type;
 }
 
 
@@ -367,35 +377,61 @@ int is_regchar(char x){
     return (x>='a' && x <= 'z') || (x>='A' && x <= 'Z');
 }
 
-/* enum mikal_types which_mktype(char *str, struct env_t *env){ */
-/*     int len = strlen(str); */
-
-/*     if(len <= 0) return MT_NONE; */
-
-/*     if(str[0] == '\"' && str[len-1] == '\"' && len >= 2){ */
-/*         return MT_STRING; */
-/*     } */
-
-/*     URet env_q = lookup_env(env, str); */
-/*     if(URet_state(env_q) == GOOD && \ */
-/*             (URet_val(env_q, struct env_entry*)->value.type == MT_FUNC)){ */
-/*         return MT_OPERATOR; */
-/*     } */
-
-/*     int is_int = 1; */
-/*     for(int i=0; i<len; i++){ */
-/*         is_int &= (str[i] >=0 && str[i] <= 9); */
-/*     } */
+URet str2ll(char *str){
+    URet ret;
+    int len = strlen(str);
+    char *endpt = (char*)(str + len);
+    char *refpt = endpt;
     
-/*     if(is_int){ */
-/*         return MT_INTEGER; */
-/*     }else{ */
-/*         if(!is_regchar(str[0])) */
-/*             return MT_NONE; */
-/*         else */
-/*             return MT_SYMBOL; */
-/*     } */
-/* } */
+    long long num = strtoll(str, &endpt, 10);
+    
+    if(errno == ERANGE){
+        ret.val = 0;
+        ret.error_code = E_OUTOFBOUND;
+    }else if(endpt != refpt){
+        ret.val = 0;
+        ret.error_code = E_FAILED;
+    }else{
+        ret.val = num;
+        ret.error_code = GOOD;
+    }
+
+    return ret;
+}
+
+#ifndef SINGTEST_MIKAL_TYPE
+enum mikal_types which_mktype(char *str, struct env_t *env){
+    int len = strlen(str);
+
+    if(len <= 0) return MT_NONE;
+
+    if(str[0] == '\"' && str[len-1] == '\"' && len >= 2){
+        return MT_STRING;
+    }
+
+    URet env_q = lookup_env(env, str);
+    if(URet_state(env_q) == GOOD && \
+            (URet_val(env_q, struct env_entry*)->value.type == MT_FUNC)){
+        return MT_OPERATOR;
+    }
+
+    int is_int = 1;
+    for(int i=0; i<len; i++){
+        is_int &= (str[i] >= '0' && str[i] <= '9');
+    }
+    
+    if(is_int){
+        return MT_INTEGER;
+    }else{
+        if(!is_regchar(str[0]))
+            return MT_NONE;
+        else
+            return MT_SYMBOL;
+    }
+}
+
+#endif
+
 
 URet add_mikal(mikal_t **args){
     URet ret;
@@ -493,7 +529,12 @@ URet div_mikal(mikal_t **args){
 #ifdef SINGLE_FILE_TEST
 
 int main(void){
-    
+    char num[] = "00001234a";
+    URet uret_val = str2ll(num);
+    long long conv_val = URet_val(uret_val, long long);
+
+    assert(URet_state(uret_val) == GOOD);
+    printf("\n%d\n", conv_val);
 }
 
 #endif

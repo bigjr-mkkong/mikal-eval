@@ -1,7 +1,6 @@
 #ifndef __ENV_H__
 #define __ENV_H__
 
-#include "reader.h"
 #include "mikal_type.h"
 
 struct env_entry{
@@ -17,8 +16,7 @@ struct env_t{
 };
 
 URet init_env(void);
-void add_env_function(struct env_t *env, char *name, mikal_t *(*func)(mikal_t **));
-void add_env_integer(struct env_t *env, char *name, mikal_t *val);
+URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value);
 void remove_env_entry(struct env_t *env, int idx);
 URet lookup_env(struct env_t *env, char *name);
 URet lookup_single_env(struct env_t *env,  char *name);

@@ -1,4 +1,4 @@
-#include "env.h"
+#include "mikal_type.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
@@ -18,7 +18,7 @@ static URet alloc_env_slot(struct env_t *env){
 
     int retval = env->next;
     env->symmap[env->next] = (struct env_entry*)malloc(sizeof(mikal_t) * 2);
-    memset(env->symmap[env->next], 0, sizeof(struct env_entry) * 2);
+    memset(env->symmap[env->next], 0, sizeof(struct env_entry));
     env->next++;
 
     ret.val = retval;
@@ -51,6 +51,7 @@ static URet free_env_slot(struct env_t *env, int idx){
 URet init_env(void){
     URet ret;
     struct env_t *ret_env = (struct env_t*)malloc(sizeof(struct env_t));
+    //ret_env->symmap = (struct env_entry**)malloc(sizeof(struct env_entry*) * 64);
 
     ret_env->fa_env = 0;
 
@@ -85,9 +86,14 @@ URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value){
     }
 
     int alloc_pt = URet_val(alloc_env_slot(env), int);
-    memcpy(&(env->symmap[alloc_pt]->symbol), symbol, sizeof(mikal_t));
-    memcpy(&(env->symmap[alloc_pt]->value), value, sizeof(mikal_t));
+    env->symmap[alloc_pt]->symbol = *symbol;
+    env->symmap[alloc_pt]->value = *value;
+    //memcpy(&(env->symmap[alloc_pt]->symbol), symbol, sizeof(mikal_t));
+    //memcpy(&(env->symmap[alloc_pt]->value), value, sizeof(mikal_t));
 
+    if(symbol->type == MT_OPERATOR){
+        env->symmap[alloc_pt]->symbol.op_type = value->op_type;
+    }
     ret.val = 0;
     ret.error_code = GOOD;
     return ret;
@@ -110,7 +116,7 @@ URet lookup_env(struct env_t *env, char *name){
             continue;
         }
         if(strcmp(name, env_ent->symbol.sym) == 0){
-            ret.error_code = E_NOTFOUND;
+            ret.error_code = GOOD;
             break;
         }
     }
@@ -120,7 +126,7 @@ URet lookup_env(struct env_t *env, char *name){
     }else if(URet_state(ret) == E_NOTFOUND){
         return lookup_env(env->fa_env, name);
     }else{
-        ret.val = (long long)(env_ent);
+        ret.addr = env_ent;
         ret.error_code = GOOD;
         return ret;
     }
