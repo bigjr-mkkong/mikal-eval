@@ -212,6 +212,18 @@ void print_ast(struct AST_Node *root){
 
 }
 
+struct AST_Node *copy_ast(struct AST_Node *root){
+    struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node));
+    memcpy(new_node, root, sizeof(struct AST_Node));
+    for(int i=0; i<MAX_CHILD; i++){
+        if(root->ops[i]){
+            new_node->ops[i] = copy_ast(root->ops[i]);
+        }
+    }
+
+    return new_node;
+}
+
 struct AST_Node *line_reader(char *line){
     struct Reader *tk_reader = tokenize(line);
     if(tk_reader == NULL)

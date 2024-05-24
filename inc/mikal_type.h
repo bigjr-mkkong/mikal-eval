@@ -5,11 +5,13 @@
 enum mikal_types{
     MT_INTEGER,
     MT_SYMBOL,
-    MT_OPERATOR,
+    //MT_OPERATOR,
     MT_STRING,      
     MT_CONS,        //list cons
     MT_AST,
     MT_FUNC,
+    MT_CLOSURE,
+    MT_UNBOND_SYM,
     MT_NONE
 };
 
@@ -46,6 +48,15 @@ typedef struct uret{
     enum error_cases error_code;
 }URet;
 
+#define MAX_PROCARGS    16
+
+struct mikal_t;
+
+typedef struct closure{
+    struct mikal_t *args[MAX_PROCARGS]; //args should have a copy of arg symbols
+    struct AST_Node *root; //root should have a copy of procedure AST
+    struct env_t *env; //env should NOT have a copy
+}Closure;
 
 typedef struct mikal_t{
     long long magic;
@@ -61,6 +72,8 @@ typedef struct mikal_t{
     struct mikal_t *cdr;
     struct AST_Node *ast;
 
+    struct closure *clos;
+
     enum mikal_types type;
     enum mikal_op_type op_type;
 }mikal_t;
@@ -75,7 +88,7 @@ typedef URet (*mikal_func)(mikal_t**);
 int valid_mikal(mikal_t *addr);
 URet make_integer(long long x);
 URet make_symbol(char *sym_name);
-URet make_operator(char *op_name);
+//URet make_operator(char *op_name);
 URet make_string(char *str_name);
 URet make_cons(mikal_t *car, mikal_t *cdr);
 URet make_ast(struct AST_Node *ast);

@@ -32,5 +32,6 @@ struct AST_Node{
 void AST_destroy(struct AST_Node *root);
 struct AST_Node *line_reader(char *line);
 void print_ast(struct AST_Node *root);
+struct AST_Node *copy_ast(struct AST_Node *root);
 
 #endif

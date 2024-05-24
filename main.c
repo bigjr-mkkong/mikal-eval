@@ -38,10 +38,10 @@ void PRINT(URet eval_result){
 
 
 static void init_meta_env(struct env_t *env){
-    mikal_t *plus_op = URet_val(make_operator("+"), mikal_t*);
-    mikal_t *minus_op = URet_val(make_operator("-"), mikal_t*);
-    mikal_t *mul_op = URet_val(make_operator("*"), mikal_t*);
-    mikal_t *div_op = URet_val(make_operator("/"), mikal_t*);
+    mikal_t *plus_op = URet_val(make_symbol("+"), mikal_t*);
+    mikal_t *minus_op = URet_val(make_symbol("-"), mikal_t*);
+    mikal_t *mul_op = URet_val(make_symbol("*"), mikal_t*);
+    mikal_t *div_op = URet_val(make_symbol("/"), mikal_t*);
     
     mikal_t *add_func = URet_val(make_func(add_mikal, OP_ARITH), mikal_t*);
     mikal_t *sub_func = URet_val(make_func(sub_mikal, OP_ARITH), mikal_t*);

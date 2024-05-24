@@ -88,12 +88,7 @@ URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value){
     int alloc_pt = URet_val(alloc_env_slot(env), int);
     env->symmap[alloc_pt]->symbol = *symbol;
     env->symmap[alloc_pt]->value = *value;
-    //memcpy(&(env->symmap[alloc_pt]->symbol), symbol, sizeof(mikal_t));
-    //memcpy(&(env->symmap[alloc_pt]->value), value, sizeof(mikal_t));
 
-    if(symbol->type == MT_OPERATOR){
-        env->symmap[alloc_pt]->symbol.op_type = value->op_type;
-    }
     ret.val = 0;
     ret.error_code = GOOD;
     return ret;
@@ -106,6 +101,7 @@ void remove_env_entry(struct env_t *env, int idx){
 
 URet lookup_env(struct env_t *env, char *name){
     URet ret;
+    URet callret1, callret2, mk_tmp;
     struct env_entry *env_ent;
 
     ret.val = 0;
@@ -125,6 +121,8 @@ URet lookup_env(struct env_t *env, char *name){
         return ret;
     }else if(URet_state(ret) == E_NOTFOUND){
         return lookup_env(env->fa_env, name);
+    }else if(URet_state(ret) == GOOD && env_ent->value.type == MT_SYMBOL){
+        return lookup_env(env, env_ent->value.sym);
     }else{
         ret.addr = env_ent;
         ret.error_code = GOOD;

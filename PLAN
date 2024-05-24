@@ -1,14 +1,2 @@
-1) Implement a better type system, should support:
-    integer
-    symbol
-    operator
-    string
-    cons list(car and cdr)
-    C function
-    AST
-and implement the translate from token to gen_type
-
-2) re-write the eval() and printing
-
-3) re-design the token
-
+lambda expression return a closure
+need a MT_CLOSURE mikal type

@@ -2,6 +2,8 @@
 #include "env.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
+URet eval(struct AST_Node *root, struct env_t *env);
 
 int is_leafnode(struct AST_Node *node){
     for(int i=0; i<MAX_CHILD; i++){
@@ -11,6 +13,53 @@ int is_leafnode(struct AST_Node *node){
     }
 
     return 1;
+}
+
+
+URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
+    URet ret, call_ret;
+    int eval_idx = 1;
+    mikal_t *subexp[MAX_CHILD];
+
+    memset(subexp, 0, sizeof(mikal_t*) * MAX_CHILD);
+
+    switch(op->type){
+        case MT_FUNC:
+            while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
+                ret = eval(root->ops[eval_idx], env);
+                if(URet_state(ret) != GOOD)
+                    goto apply_Failed;
+                
+                subexp[eval_idx-1] = URet_val(ret, mikal_t*);
+                eval_idx++;
+            }
+
+            call_ret = op->func(subexp);
+            if(URet_state(call_ret) != GOOD)
+                goto apply_Failed;
+
+            call_ret.addr = URet_val(call_ret, mikal_t *);
+            call_ret.error_code = GOOD;
+            break;
+
+        case MT_CLOSURE:
+            call_ret.val = 0;
+            call_ret.error_code = E_CASE_UNIMPL;
+            break;
+
+        default:
+           call_ret.val = 0;
+           call_ret.error_code = E_CASE_UNIMPL;
+           break;
+    }
+
+    return call_ret;
+
+apply_Failed:
+    call_ret.val = 0;
+    call_ret.error_code = E_FAILED;
+    return call_ret;
+
 }
 
 URet self_eval(char *tokstr, struct env_t *env){
@@ -47,13 +96,19 @@ URet self_eval(char *tokstr, struct env_t *env){
             break;
 
         case MT_SYMBOL:
+            mikal_t *val = (mikal_t*)malloc(sizeof(mikal_t));
             call_ret = lookup_env(env, tokstr);
             if(URet_state(call_ret) == GOOD){
-                ret = call_ret;
+                memcpy(val, &(URet_val(call_ret, struct env_entry*)->value), sizeof(mikal_t));
+                ret.addr = val;
+                ret.error_code = GOOD;
+                return ret;
             }else if(URet_state(call_ret) == E_NOTFOUND){
                 call_ret = make_symbol(tokstr);
-                if(URet_state(call_ret) != GOOD)
+                if(URet_state(call_ret) != GOOD){
+                    free(val);
                     goto selfeval_Failed;
+                }
 
                 ret = call_ret;
             }else{
@@ -61,15 +116,15 @@ URet self_eval(char *tokstr, struct env_t *env){
             }
             break; 
 
-        case MT_OPERATOR:
-            call_ret = lookup_env(env, tokstr);
-            if(URet_state(call_ret) != GOOD)
-                goto selfeval_Failed;
+        /* case MT_OPERATOR: */
+        /*     call_ret = lookup_env(env, tokstr); */
+        /*     if(URet_state(call_ret) != GOOD) */
+        /*         goto selfeval_Failed; */
 
-            struct env_entry *ent = URet_val(call_ret, struct env_entry*);
-            ret.addr = &(ent->value);
-            ret.error_code = GOOD;
-            break;
+        /*     struct env_entry *ent = URet_val(call_ret, struct env_entry*); */
+        /*     ret.addr = &(ent->value); */
+        /*     ret.error_code = GOOD; */
+        /*     break; */
 
         default:
             ret.val = 0;
@@ -86,7 +141,6 @@ selfeval_Failed:
 
 URet eval(struct AST_Node *root, struct env_t *env){
     URet ret;
-    mikal_t *subexp[MAX_CHILD];
     mikal_t *operation;
 
     if(is_leafnode(root)){
@@ -101,32 +155,23 @@ URet eval(struct AST_Node *root, struct env_t *env){
 
     operation = URet_val(ret, mikal_t*);
 
-    if(operation->type != MT_FUNC)
+    if(operation->type != MT_FUNC){
+        ret.val = 0;
+        ret.error_code = E_FAILED;
         goto eval_Failed;
+    }
     
-    memset(subexp, 0, sizeof(mikal_t*) * MAX_CHILD);
     int eval_idx = 1;
-    if(operation->op_type == OP_ARITH){
-        while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
-            ret = eval(root->ops[eval_idx], env);
-            if(URet_state(ret) != GOOD)
-                goto eval_Failed;
-            
-            subexp[eval_idx-1] = URet_val(ret, mikal_t*);
-            eval_idx++;
-        }
-
-        ret = operation->func(subexp);
-
+    if(operation->op_type != OP_ENV){
+        ret = apply(operation, root, env);
         if(URet_state(ret) != GOOD)
             goto eval_Failed;
     }else{
         printf("%s is not an arithmetic operation\n", operation->op);
     }
 
-
     return ret;
-
 eval_Failed:
     return ret;
+
 }
