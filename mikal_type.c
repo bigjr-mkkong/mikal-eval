@@ -10,12 +10,13 @@
 
 URet copy_mikal(mikal_t *src);
 
-static char *arith_op[] = {"+", "-", "*", "/"};
-static char *env_op[] = {"def!", "let!", "set!"};
-static char *list_op[] = {"car", "cdr", "cons"};
-static char *br_op[] = {"if"};
-static char *lambda_op[] = {"lambda"};
-
+/*
+ * build-in operations:
+ * + - * /
+ * def let set
+ * car cdr cons
+ * lambda
+ */
 int valid_mikal(mikal_t *addr){
     if(!addr || addr->magic != MIKAL_MAGIC)
         return 0;
@@ -62,33 +63,6 @@ URet make_symbol(char *sym_name){
     retval.error_code = GOOD;
     return retval;
 }
-
-/* URet make_operator(char *op_name){ */
-/*     URet retval; */
-
-/*     if(!op_name){ */
-/*         retval.val = 0; */
-/*         retval.error_code = E_INVAL_ADDR; */
-/*         return retval; */
-/*     } */
-
-/*     int name_len = strlen(op_name); */
-/*     if(name_len <= 0){ */
-/*         retval.val = 0; */
-/*         retval.error_code = E_EMPTY; */
-/*         return retval; */
-/*     } */
-    
-/*     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t)); */
-/*     ret->op = (char*)malloc(sizeof(name_len)); */
-/*     strcpy(ret->op, op_name); */
-/*     ret->type = MT_OPERATOR; */
-/*     ret->magic = MIKAL_MAGIC; */
-
-/*     retval.addr = ret; */
-/*     retval.error_code = GOOD; */
-/*     return retval; */
-/* } */
 
 URet make_string(char *str_name){
     URet retval;
@@ -253,10 +227,6 @@ URet print_mikal(mikal_t *target){
             fprintf(stdout, "%s", target->sym);
             break;
 
-        /* case MT_OPERATOR: */
-        /*     fprintf(stdout, "%s", target->op); */
-        /*     break; */
-
         case MT_STRING:
             fprintf(stdout, "%s", target->str);
             break;
@@ -305,11 +275,6 @@ URet destroy_mikal(mikal_t *target){
             free(target);
             break;
 
-        /* case MT_OPERATOR: */
-        /*     free(target->op); */
-        /*     free(target); */
-        /*     break; */
-
         case MT_STRING:
             free(target->str);
             free(target);
@@ -334,12 +299,6 @@ URet destroy_mikal(mikal_t *target){
 
             AST_destroy(tmp_clos->root);
             tmp_clos->env->ref_cnt--;
-            /*
-             * if ref_cnt <=0, then we free the environment
-             * BUT we don't need to worry about that problem
-             * so far. We still assume there are only 1 
-             * meta environment when we are evaluating
-             */
             break;
 
         case MT_AST:
@@ -355,8 +314,9 @@ URet destroy_mikal(mikal_t *target){
 }
 
 int mikal_cmp(mikal_t *val1, mikal_t *val2){
-    int cmp_result = 0;
+    int cmp_result;
     if(val1->type != val2->type){
+        cmp_result = -1;
         return cmp_result;
     }else{
         switch(val1->type){
@@ -368,71 +328,14 @@ int mikal_cmp(mikal_t *val1, mikal_t *val2){
                 cmp_result = !(strcmp(val1->sym, val2->sym));
                 break;
 
-            /* case //MT_OPERATOR: */
-            /*     cmp_result = (val1->op_type == val2->op_type) && (!strcmp(val1->op, val2->op)); */
-            /*     break; */
-                
+            default:
+                cmp_result = -1;
+                break;
         }
     }
+
+    return cmp_result;
 }
-
-/* enum mikal_op_type which_op(char *str, struct env_t *env){ */
-/*     int lstlen_arithop = sizeof(arith_op) / sizeof(char*); */
-/*     int lstlen_envop = sizeof(env_op) / sizeof(char*); */
-/*     int lstlen_listop = sizeof(list_op) / sizeof(char*); */
-/*     int lstlen_brop = sizeof(br_op) / sizeof(char*); */
-/*     int lstlen_lamop = sizeof(lambda_op) / sizeof(char*); */
-
-/*     enum mikal_op_type op_type = OP_UNDEF; */
-/*     if(str == NULL) */
-/*         return op_type; */
-
-/*     for(int i=0; i<lstlen_arithop; i++){ */
-/*         if(strcmp(str, arith_op[i]) == 0){ */
-/*             op_type = OP_ARITH; */
-/*             return op_type; */
-/*         } */
-/*     } */
-
-/*     for(int i=0; i<lstlen_envop; i++){ */
-/*         if(strcmp(str, env_op[i]) == 0){ */
-/*             op_type = OP_ENV; */
-/*             return op_type; */
-/*         } */
-/*     } */
-
-/*     for(int i=0; i<lstlen_listop; i++){ */
-/*         if(strcmp(str, list_op[i]) == 0){ */
-/*             op_type = OP_CONS; */
-/*             return op_type; */
-/*         } */
-/*     } */
-
-/*     for(int i=0; i<lstlen_brop; i++){ */
-/*         if(strcmp(str, br_op[i]) == 0){ */
-/*             op_type = OP_BRANCH; */
-/*             return op_type; */
-/*         } */
-/*     } */
-
-/*     for(int i=0; i<lstlen_lamop; i++){ */
-/*         if(strcmp(str, lambda_op[i]) == 0){ */
-/*             op_type = OP_LAMBDA; */
-/*             return op_type; */
-/*         } */
-/*     } */
-
-/*     URet ret = lookup_env(env, str); */
-/*     if(URet_state(ret) != GOOD) */
-/*         return op_type; */
-
-/*     mikal_t *func = URet_val(ret, mikal_t*); */
-/*     if(func->type != MT_FUNC) */
-/*         return op_type; */
-/*     else */
-/*         return func->op_type; */
-/* } */
-
 
 int is_regchar(char x){
     return (x>='a' && x <= 'z') || (x>='A' && x <= 'Z');

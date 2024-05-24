@@ -1,2 +1,3 @@
-lambda expression return a closure
-need a MT_CLOSURE mikal type
+Fix memory free
+implement lambda
+implement cons/car/cdr
