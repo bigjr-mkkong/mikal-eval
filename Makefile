@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -O0  -lreadline -I./inc
 LDFLAGS = -g
-SRCS = main.c reader.c env.c mikal_type.c eval.c
+SRCS = main.c reader.c env.c mikal_type.c eval.c buildin_func.c
 
 OBJS = $(SRCS:%.c=%.o)
 BINS = $(OBJS:%.o=%)

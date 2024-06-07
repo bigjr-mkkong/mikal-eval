@@ -163,7 +163,7 @@ URet make_func(mikal_func func, enum mikal_op_type type){
     return retval;
 }
 
-URet make_closure(mikal_t *args[], struct AST_Node *root,struct env_t *env){
+URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
     URet ret, call_ret;
     int argidx;
     for(int argidx=0; argidx<MAX_PROCARGS && args[argidx]; argidx++){
@@ -424,14 +424,6 @@ URet copy_mikal(mikal_t *src){
             strcpy(dst->sym, src->sym);
             break; 
 
-        /* case MT_OPERATOR: */
-        /*     len = strlen(src->op); */
-        /*     dst = malloc(sizeof(mikal_t)); */
-        /*     memcpy(dst, src, sizeof(mikal_t)); */
-        /*     dst->str = (char*)malloc(len); */
-        /*     strcpy(dst->op, src->op); */
-        /*     break; */
-
         case MT_INTEGER:
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
@@ -449,98 +441,6 @@ URet copy_mikal(mikal_t *src){
     return ret;
 }
 
-URet add_mikal(mikal_t **args){
-    URet ret;
-    long long sum = 0;
-    mikal_t *adder = args[0];
-    for(int i=0; adder; i++, adder = args[i]){
-        if(!valid_mikal(adder) || adder->type != MT_INTEGER){
-            ret.error_code = E_INVAL_TYPE;
-            ret.val = 0;
-            return ret;
-        }
-        sum += adder->integer;
-    }
-
-    mikal_t *ans = URet_val(make_integer(sum) ,mikal_t*);
-    ret.addr = ans;
-    ret.error_code = GOOD;
-    return ret;
-}
-
-URet sub_mikal(mikal_t **args){
-    URet ret;
-    mikal_t *suber;
-    long long result;
-    for(int i=0; args[i]; i++){
-        suber = args[i];
-        if(!valid_mikal(suber) || suber->type != MT_INTEGER){
-            ret.error_code = E_INVAL_TYPE;
-            ret.val = 0;
-            return ret;
-        }
-        if(i == 0)
-            result = args[i]->integer;
-        else
-            result -= suber->integer;
-    }
-
-    mikal_t *ans = URet_val(make_integer(result) ,mikal_t*);
-    ret.addr = ans;
-    ret.error_code = GOOD;
-    return ret;
-}
-
-URet mul_mikal(mikal_t **args){
-    URet ret;
-    long long sum = 1;
-    mikal_t *multer = args[0];
-    for(int i=0; multer; i++, multer = args[i]){
-        if(!valid_mikal(multer) || multer->type != MT_INTEGER){
-            ret.error_code = E_INVAL_TYPE;
-            ret.val = 0;
-            return ret;
-        }
-        sum *= multer->integer;
-    }
-
-    mikal_t *ans = URet_val(make_integer(sum) ,mikal_t*);
-    ret.addr = ans;
-    ret.error_code = GOOD;
-    return ret;
-}
-
-URet div_mikal(mikal_t **args){
-    URet ret;
-    mikal_t *div1 = args[0];
-    mikal_t *div2 = args[1];
-
-    if(!valid_mikal(div1)){
-        ret.val = 0;
-        ret.error_code = E_INVAL_TYPE;
-        return ret;
-    }
-
-    if(!valid_mikal(div2)){
-        ret.val = 0;
-        ret.error_code = E_INVAL_TYPE;
-        return ret;
-    }
-
-    if(div2->integer == 0){
-        ret.val = 0;
-        ret.error_code = E_ARITH_ERROR;
-        return ret;
-    }
-    long long result;
-
-    result = div1->integer / div2->integer;
-    
-    mikal_t *ans = URet_val(make_integer(result) ,mikal_t*);
-    ret.addr = ans;
-    ret.error_code = GOOD;
-    return ret;
-}
 
 #ifdef SINGLE_FILE_TEST
 

@@ -25,21 +25,27 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
     switch(op->type){
         case MT_FUNC:
-            while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
-                ret = eval(root->ops[eval_idx], env);
-                if(URet_state(ret) != GOOD)
+            if(op->op_type == OP_ARITH){
+                while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
+                    ret = eval(root->ops[eval_idx], env);
+                    if(URet_state(ret) != GOOD)
+                        goto apply_Failed;
+                    
+                    subexp[eval_idx-1] = URet_val(ret, mikal_t*);
+                    eval_idx++;
+                }
+
+                call_ret = op->func(subexp);
+                if(URet_state(call_ret) != GOOD)
                     goto apply_Failed;
+
+                call_ret.addr = URet_val(call_ret, mikal_t *);
+                call_ret.error_code = GOOD;
+            }else if(op->op_type == OP_LAMBDA){
+                //assemble args string into mikal symbol
                 
-                subexp[eval_idx-1] = URet_val(ret, mikal_t*);
-                eval_idx++;
             }
-
-            call_ret = op->func(subexp);
-            if(URet_state(call_ret) != GOOD)
-                goto apply_Failed;
-
-            call_ret.addr = URet_val(call_ret, mikal_t *);
-            call_ret.error_code = GOOD;
+            
             break;
 
         case MT_CLOSURE:

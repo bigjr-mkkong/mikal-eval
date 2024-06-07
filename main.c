@@ -5,6 +5,7 @@
 #include "readline/readline.h"
 #include "env.h"
 #include "eval.h"
+#include "buildin_func.h"
 
 struct AST_Node *READ(char *prompt){
     char *user_in;
