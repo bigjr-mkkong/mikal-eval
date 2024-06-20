@@ -94,7 +94,14 @@ URet div_mikal(mikal_t **args, ...){
     return ret;
 }
 
-//URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env)
+/*
+ * Required format:
+ * URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env)
+ * args is the arguments for new closure
+ * root is the ast root for new 'sub-rutine'
+ * env is the environment
+ * all arguments does NOT need to pass as copy
+ */
 URet make_clos_mikal(mikal_t **args, ...){
     va_list vvar;
     va_start(vvar, args);

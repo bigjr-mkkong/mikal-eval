@@ -5,5 +5,6 @@ URet add_mikal(mikal_t **args, ...);
 URet sub_mikal(mikal_t **args, ...);
 URet mul_mikal(mikal_t **args, ...);
 URet div_mikal(mikal_t **args, ...);
+URet make_clos_mikal(mikal_t **args, ...);
 
 #endif

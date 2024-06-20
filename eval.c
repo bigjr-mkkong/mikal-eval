@@ -43,7 +43,18 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 call_ret.error_code = GOOD;
             }else if(op->op_type == OP_LAMBDA){
                 //assemble args string into mikal symbol
-                
+                printf("This contains lambda expression\n");
+                struct AST_Node *arg_node = root->ops[1];
+                for(int argidx = 0; argidx < MAX_PROCARGS && arg_node->ops[argidx]; argidx++){
+                    ret = eval(arg_node->ops[argidx], env);
+                    if(URet_state(ret) != GOOD)
+                        goto apply_Failed;
+
+                    subexp[argidx] = URet_val(ret, mikal_t*);
+                }
+                call_ret = op->func(subexp, root->ops[2], env);
+                if(URet_state(call_ret) != GOOD)
+                    goto apply_Failed;
             }
             
             break;
@@ -122,15 +133,10 @@ URet self_eval(char *tokstr, struct env_t *env){
             }
             break; 
 
-        /* case MT_OPERATOR: */
-        /*     call_ret = lookup_env(env, tokstr); */
-        /*     if(URet_state(call_ret) != GOOD) */
-        /*         goto selfeval_Failed; */
-
-        /*     struct env_entry *ent = URet_val(call_ret, struct env_entry*); */
-        /*     ret.addr = &(ent->value); */
-        /*     ret.error_code = GOOD; */
-        /*     break; */
+        case MT_UNBOND_SYM:
+            ret.addr = URet_val(make_symbol(tokstr), void *);
+            ret.error_code = GOOD;
+            break;
 
         default:
             ret.val = 0;

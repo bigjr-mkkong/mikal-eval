@@ -178,10 +178,11 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
     Closure *clos = (Closure*)malloc(sizeof(Closure));
 
     mik_clos->clos = clos;
+    mik_clos->magic = MIKAL_MAGIC;
     mik_clos->type = MT_CLOSURE;
 
-    int cpidx;
-    for(int cpidx=0; cpidx<MAX_PROCARGS; cpidx++){
+    int cpidx = 0;
+    for(cpidx=0; cpidx<MAX_PROCARGS && args[cpidx]; cpidx++){
         call_ret = copy_mikal(args[cpidx]);
         if(URet_state(call_ret) != GOOD){
             ret = call_ret;
@@ -246,6 +247,9 @@ URet print_mikal(mikal_t *target){
         case MT_AST:
             ret.error_code = E_CASE_UNIMPL;
             break;
+
+        case MT_CLOSURE:
+            fprintf(stdout, "This is a clusure\n");
 
         default:
             ret.error_code = E_CASE_UNIMPL;
