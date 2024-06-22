@@ -50,7 +50,7 @@ static URet free_env_slot(struct env_t *env, int idx){
 
 URet init_env(void){
     URet ret;
-    struct env_t *ret_env = (struct env_t*)malloc(sizeof(struct env_t));
+    struct env_t *ret_env = (struct env_t*)calloc(1, sizeof(struct env_t));
     //ret_env->symmap = (struct env_entry**)malloc(sizeof(struct env_entry*) * 64);
 
     ret_env->fa_env = 0;

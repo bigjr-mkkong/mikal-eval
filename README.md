@@ -1,4 +1,4 @@
 # mikal-eval
 A simple lisp evaluator
 
-Still working on eval()
+Working on Error report of lambda expression

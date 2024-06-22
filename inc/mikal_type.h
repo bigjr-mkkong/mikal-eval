@@ -21,6 +21,7 @@ enum mikal_op_type{
     OP_ARITH,
     OP_BRANCH,
     OP_LAMBDA,
+    OP_CLOSURE,
     OP_UNDEF
 };
 #include "reader.h"

@@ -180,6 +180,7 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
     mik_clos->clos = clos;
     mik_clos->magic = MIKAL_MAGIC;
     mik_clos->type = MT_CLOSURE;
+    mik_clos->op_type = OP_CLOSURE;
 
     int cpidx = 0;
     for(cpidx=0; cpidx<MAX_PROCARGS && args[cpidx]; cpidx++){

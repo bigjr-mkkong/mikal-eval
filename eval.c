@@ -43,7 +43,6 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 call_ret.error_code = GOOD;
             }else if(op->op_type == OP_LAMBDA){
                 //assemble args string into mikal symbol
-                printf("This contains lambda expression\n");
                 struct AST_Node *arg_node = root->ops[1];
                 for(int argidx = 0; argidx < MAX_PROCARGS && arg_node->ops[argidx]; argidx++){
                     ret = eval(arg_node->ops[argidx], env);
@@ -60,8 +59,31 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             break;
 
         case MT_CLOSURE:
-            call_ret.val = 0;
-            call_ret.error_code = E_CASE_UNIMPL;
+            /* call_ret.val = 0; */
+            /* call_ret.error_code = E_CASE_UNIMPL; */
+            printf("Start apply closure on arguments\n");
+                
+            struct env_t *new_env = URet_val(init_env(), struct env_t*);
+            new_env->fa_env = env;
+            struct closure *clos = op->clos;
+            int val_idx = 1;
+            int sym_idx = 0;
+            for(; val_idx<MAX_PROCARGS && root->ops[val_idx]; val_idx++){
+                ret = eval(root->ops[val_idx], env);
+                if(URet_state(ret) != GOOD)
+                    goto apply_Failed;
+
+                subexp[val_idx-1] = URet_val(ret, mikal_t*);
+            }
+
+            for(; sym_idx<MAX_PROCARGS && clos->args[sym_idx]; sym_idx++){
+                add_env_entry(new_env, clos->args[sym_idx], subexp[sym_idx]);
+            }
+            
+            /* if(val_idx-1 != sym_idx) goto apply_Failed; */
+
+            call_ret = eval(clos->root, new_env);
+            
             break;
 
         default:
@@ -167,7 +189,7 @@ URet eval(struct AST_Node *root, struct env_t *env){
 
     operation = URet_val(ret, mikal_t*);
 
-    if(operation->type != MT_FUNC){
+    if(operation->type != MT_FUNC && operation->type != MT_CLOSURE){
         ret.val = 0;
         ret.error_code = E_FAILED;
         goto eval_Failed;
