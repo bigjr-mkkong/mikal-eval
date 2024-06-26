@@ -33,6 +33,7 @@ void PRINT(URet eval_result){
 
     print_mikal(URet_val(eval_result, mikal_t*));
 
+    destroy_mikal(URet_val(eval_result, mikal_t*));
     printf("\n");
     return;
 }
@@ -56,6 +57,18 @@ static void init_meta_env(struct env_t *env){
     add_env_entry(env, mul_op, mul_func);
     add_env_entry(env, div_op, div_func);
     add_env_entry(env, lambda_op, lambda_func);
+
+    destroy_mikal(plus_op);
+    destroy_mikal(minus_op);
+    destroy_mikal(mul_op);
+    destroy_mikal(div_op);
+    destroy_mikal(lambda_op);
+    
+    destroy_mikal(add_func);
+    destroy_mikal(sub_func);
+    destroy_mikal(mul_func);
+    destroy_mikal(div_func);
+    destroy_mikal(lambda_func);
 
     env->fa_env = env;
 

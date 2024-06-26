@@ -40,6 +40,8 @@ static URet free_env_slot(struct env_t *env, int idx){
         return ret;
     }
 
+    destroy_mikal(env->symmap[idx]->symbol);
+    destroy_mikal(env->symmap[idx]->value);
     free(env->symmap[idx]);
     env->symmap[idx] = 0;
 
@@ -72,7 +74,7 @@ void destroy_env(struct env_t *env){
 }
 
 URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value){
-    URet ret;
+    URet ret, call_ret;
     if(!valid_mikal(symbol)){
         ret.val = 0;
         ret.error_code = E_INVAL_TYPE;
@@ -86,8 +88,11 @@ URet add_env_entry(struct env_t *env, mikal_t *symbol, mikal_t *value){
     }
 
     int alloc_pt = URet_val(alloc_env_slot(env), int);
-    env->symmap[alloc_pt]->symbol = *symbol;
-    env->symmap[alloc_pt]->value = *value;
+
+    call_ret = copy_mikal(symbol);
+    env->symmap[alloc_pt]->symbol = URet_val(call_ret, mikal_t*);
+    call_ret = copy_mikal(value);
+    env->symmap[alloc_pt]->value = URet_val(call_ret, mikal_t*);
 
     ret.val = 0;
     ret.error_code = GOOD;
@@ -111,7 +116,7 @@ URet lookup_env(struct env_t *env, char *name){
         if(env_ent == NULL){
             continue;
         }
-        if(strcmp(name, env_ent->symbol.sym) == 0){
+        if(strcmp(name, env_ent->symbol->sym) == 0){
             ret.error_code = GOOD;
             break;
         }
@@ -121,8 +126,8 @@ URet lookup_env(struct env_t *env, char *name){
         return ret;
     }else if(URet_state(ret) == E_NOTFOUND){
         return lookup_env(env->fa_env, name);
-    }else if(URet_state(ret) == GOOD && env_ent->value.type == MT_SYMBOL){
-        return lookup_env(env, env_ent->value.sym);
+    }else if(URet_state(ret) == GOOD && env_ent->value->type == MT_SYMBOL){
+        return lookup_env(env, env_ent->value->sym);
     }else{
         ret.addr = env_ent;
         ret.error_code = GOOD;
@@ -140,7 +145,7 @@ URet lookup_single_env(struct env_t *env,  char *name){
         if(env_ent == NULL){
             continue;
         }
-        if(strcmp(name, env_ent->symbol.sym) == 0){
+        if(strcmp(name, env_ent->symbol->sym) == 0){
             ret.error_code = E_NOTFOUND;
             break;
         }

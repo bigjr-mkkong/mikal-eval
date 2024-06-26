@@ -19,6 +19,7 @@ int is_leafnode(struct AST_Node *node){
 URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
     URet ret, call_ret;
     int eval_idx = 1;
+    int free_idx = 0;
     mikal_t *subexp[MAX_CHILD];
 
     memset(subexp, 0, sizeof(mikal_t*) * MAX_CHILD);
@@ -41,6 +42,9 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
                 call_ret.addr = URet_val(call_ret, mikal_t *);
                 call_ret.error_code = GOOD;
+
+                for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
+                    destroy_mikal(subexp[free_idx]);
             }else if(op->op_type == OP_LAMBDA){
                 //assemble args string into mikal symbol
                 struct AST_Node *arg_node = root->ops[1];
@@ -55,14 +59,12 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 if(URet_state(call_ret) != GOOD)
                     goto apply_Failed;
             }
-            
-            break;
+            for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
+                destroy_mikal(subexp[free_idx]);
 
+            destroy_mikal(op);
+            break;
         case MT_CLOSURE:
-            /* call_ret.val = 0; */
-            /* call_ret.error_code = E_CASE_UNIMPL; */
-            printf("Start apply closure on arguments\n");
-                
             struct env_t *new_env = URet_val(init_env(), struct env_t*);
             new_env->fa_env = env;
             struct closure *clos = op->clos;
@@ -80,8 +82,6 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 add_env_entry(new_env, clos->args[sym_idx], subexp[sym_idx]);
             }
             
-            /* if(val_idx-1 != sym_idx) goto apply_Failed; */
-
             call_ret = eval(clos->root, new_env);
             
             break;
@@ -135,11 +135,16 @@ URet self_eval(char *tokstr, struct env_t *env){
             break;
 
         case MT_SYMBOL:
-            mikal_t *val = (mikal_t*)malloc(sizeof(mikal_t));
+            mikal_t *val;
             call_ret = lookup_env(env, tokstr);
             if(URet_state(call_ret) == GOOD){
-                memcpy(val, &(URet_val(call_ret, struct env_entry*)->value), sizeof(mikal_t));
-                ret.addr = val;
+                val = URet_val(call_ret, struct env_entry*)->value;
+
+                call_ret = copy_mikal(val);
+                if(URet_state(call_ret) != GOOD)
+                    goto selfeval_Failed;
+
+                ret.addr = URet_val(call_ret, mikal_t*);
                 ret.error_code = GOOD;
                 return ret;
             }else if(URet_state(call_ret) == E_NOTFOUND){

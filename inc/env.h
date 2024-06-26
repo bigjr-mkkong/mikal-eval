@@ -4,8 +4,8 @@
 #include "mikal_type.h"
 
 struct env_entry{
-    mikal_t symbol;
-    mikal_t value;
+    mikal_t *symbol;
+    mikal_t *value;
 };
 
 struct env_t{

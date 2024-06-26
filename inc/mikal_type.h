@@ -2,6 +2,8 @@
 #define __MIKAL_TYPE_H__
 #define MIKAL_MAGIC   0xc0ffee
 
+#define ROUND_UP(x) (((x) + 8) & (~7))
+
 enum mikal_types{
     MT_INTEGER,
     MT_SYMBOL,
@@ -99,6 +101,8 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env);
 
 URet print_mikal(mikal_t *target);
 URet destroy_mikal(mikal_t *target);
+URet move_mikal(mikal_t *dst, mikal_t *src);
+URet copy_mikal(mikal_t *src);
 
 int mikal_cmp(mikal_t *val1, mikal_t *val2);
 

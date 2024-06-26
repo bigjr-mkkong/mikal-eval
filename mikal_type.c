@@ -7,6 +7,7 @@
 #include "stdio.h"
 #include "errno.h"
 #include "assert.h"
+#include "malloc.h"
 
 URet copy_mikal(mikal_t *src);
 
@@ -54,7 +55,7 @@ URet make_symbol(char *sym_name){
     }
     
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
-    ret->sym = (char*)malloc(sizeof(name_len));
+    ret->sym = (char*)calloc(1, ROUND_UP(sizeof(name_len)));
     strcpy(ret->sym, sym_name);
     ret->type = MT_SYMBOL;
     ret->magic = MIKAL_MAGIC;
@@ -81,7 +82,7 @@ URet make_string(char *str_name){
     }
     
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
-    ret->str = (char*)malloc(sizeof(name_len + 8));
+    ret->str = (char*)calloc(1, ROUND_UP(sizeof(name_len + 8)));
     
     if(name_len >= 2 && str_name[0] == '\"' && str_name[name_len-1] == '\"'){
         strcpy(ret->str, str_name);
@@ -417,7 +418,7 @@ URet copy_mikal(mikal_t *src){
             len = strlen(src->str);
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
-            dst->str = (char*)malloc(len);
+            dst->str = (char*)calloc(1, ROUND_UP(len));
             strcpy(dst->str, src->str);
             break;
 
@@ -425,11 +426,16 @@ URet copy_mikal(mikal_t *src){
             len = strlen(src->sym);
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
-            dst->str = (char*)malloc(len);
+            dst->str = (char*)calloc(1, ROUND_UP(len));
             strcpy(dst->sym, src->sym);
             break; 
 
         case MT_INTEGER:
+            dst = malloc(sizeof(mikal_t));
+            memcpy(dst, src, sizeof(mikal_t));
+            break;
+
+        case MT_FUNC:
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
             break;
@@ -444,6 +450,33 @@ URet copy_mikal(mikal_t *src){
     ret.error_code = GOOD;
 
     return ret;
+}
+
+URet move_mikal(mikal_t *dst, mikal_t *src){
+    URet ret, call_ret;
+    if(!valid_mikal(src)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
+
+    if(malloc_usable_size(dst) < sizeof(mikal_t)){
+        ret.val = 0;
+        ret.error_code = E_OUTOFBOUND;
+        return ret;
+    }
+    call_ret = copy_mikal(src);
+    if(URet_state(call_ret) != GOOD)
+        return call_ret;
+        
+    mikal_t *copied = URet_val(call_ret, mikal_t*);
+    memcpy(dst, copied, sizeof(mikal_t));
+    free(copied);
+
+    ret.error_code = GOOD;
+    ret.val = 0;
+    return ret;
+
 }
 
 
