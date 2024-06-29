@@ -183,6 +183,7 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
     mik_clos->type = MT_CLOSURE;
     mik_clos->op_type = OP_CLOSURE;
 
+    memset(clos->args, 0, MAX_PROCARGS * sizeof(mikal_t *));
     int cpidx = 0;
     for(cpidx=0; cpidx<MAX_PROCARGS && args[cpidx]; cpidx++){
         call_ret = copy_mikal(args[cpidx]);
@@ -209,6 +210,98 @@ make_closure_Failed:
     free(mik_clos);
 }
 
+/* URet make_cons(mikal_t *car, mikal_t *cdr){ */
+/*     URet ret; */
+/*     if(car || cdr || !valid_mikal(car) || !valid_mikal(cdr)){// for cons, it should allow car/cdr be NULL */
+/*         ret.val = 0; */
+/*         ret.error_code = E_INVAL_TYPE; */
+/*         goto make_cons_failed; */
+/*     } */
+
+/*     mikal_t *mikal_cons = malloc(sizeof(mikal_t)); */
+/*     mikal_cons->magic = MIKAL_MAGIC; */
+/*     mikal_cons->type = MT_CONS; */
+/*     mikal_cons->car = car; */
+/*     mikal_cons->cdr = cdr; */
+
+/*     ret.addr = mikal_cons; */
+/*     ret.error_code = GOOD; */
+
+/*     return ret; */
+
+/* make_cons_failed: */
+/*     return ret; */
+/* } */
+
+void print_cons(mikal_t *node){
+    if(!node) return;
+    if(valid_mikal(node) && node->type != MT_CONS){
+        print_mikal(node);
+        return;
+    }
+
+    printf("(");
+    print_cons(node->car);
+    printf(" . ");
+    print_cons(node->cdr);
+    printf(")");
+
+    return;
+}
+
+void destroy_cons(mikal_t *node){
+    if(!node) return;
+    if(valid_mikal(node) && node->type != MT_CONS){
+        destroy_mikal(node);
+        return;
+    }
+
+    destroy_cons(node->car);
+    destroy_cons(node->cdr);
+
+    free(node);
+
+    return;
+}
+
+URet copy_cons(mikal_t *node){
+    URet call_ret, ret;
+    if(!node){
+        call_ret.val = 0;
+        call_ret.error_code = E_INVAL_ADDR;
+        return call_ret;
+    }
+    if(valid_mikal(node) && node->type != MT_CONS){
+        return copy_mikal(node);
+    }
+
+    mikal_t *copied_car, *copied_cdr, *new_cons;
+    call_ret = copy_cons(node->car);
+    if(URet_state(call_ret) != GOOD)
+        goto copy_cons_failed;
+
+    copied_car = URet_val(call_ret, mikal_t*);
+
+    call_ret = copy_cons(node->cdr);
+    if(URet_state(call_ret) != GOOD)
+        goto copy_cons_failed;
+
+    copied_cdr = URet_val(call_ret, mikal_t*);
+
+    call_ret = make_cons(copied_car, copied_cdr);
+    if(URet_state(call_ret) != GOOD)
+        goto copy_cons_failed;
+
+    new_cons = URet_val(call_ret, mikal_t*);
+    ret.addr = new_cons;
+    ret.error_code = GOOD;
+
+    return ret;
+
+copy_cons_failed:
+    return call_ret;
+
+}
 
 URet print_mikal(mikal_t *target){
     URet ret;
@@ -234,14 +327,6 @@ URet print_mikal(mikal_t *target){
             fprintf(stdout, "%s", target->str);
             break;
 
-        case MT_CONS:
-            fprintf(stdout, "(");
-            print_mikal(target->car);
-            fprintf(stdout, ".");
-            print_mikal(target->cdr);
-            fprintf(stdout, ")");
-            break;
-
         case MT_FUNC:
             ret.error_code = E_INVAL_TYPE;
             break;
@@ -252,6 +337,11 @@ URet print_mikal(mikal_t *target){
 
         case MT_CLOSURE:
             fprintf(stdout, "This is a clusure\n");
+            break;
+
+        case MT_CONS:
+            print_cons(target);
+            break;
 
         default:
             ret.error_code = E_CASE_UNIMPL;
@@ -286,12 +376,6 @@ URet destroy_mikal(mikal_t *target){
             free(target);
             break;
 
-        case MT_CONS:
-            destroy_mikal(target->car);
-            destroy_mikal(target->cdr);
-            free(target);
-            break;
-
         case MT_FUNC:
             free(target);
             break;
@@ -311,12 +395,16 @@ URet destroy_mikal(mikal_t *target){
             retval.error_code = E_CASE_UNIMPL;
             break;
 
+        case MT_CONS:
+            destroy_cons(target);
+            break;
+
         default:
             retval.error_code = E_CASE_UNIMPL;
             break;
     }
     
-    return retval;;
+    return retval;
 }
 
 int mikal_cmp(mikal_t *val1, mikal_t *val2){
