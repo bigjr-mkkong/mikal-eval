@@ -3,6 +3,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "gc.h"
 URet eval(struct AST_Node *root, struct env_t *env);
 
 int is_leafnode(struct AST_Node *node){
@@ -26,7 +27,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
     switch(op->type){
         case MT_FUNC:
-            if(op->op_type == OP_ARITH){
+            if(op->op_type == OP_ARITH || op->op_type == OP_CONS){
                 while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
                     ret = eval(root->ops[eval_idx], env);
                     if(URet_state(ret) != GOOD)
@@ -44,7 +45,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 call_ret.error_code = GOOD;
 
                 for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
-                    destroy_mikal(subexp[free_idx]);
+                    add_gc_mikal(subexp[free_idx]);
             }else if(op->op_type == OP_LAMBDA){
                 //assemble args string into mikal symbol
                 struct AST_Node *arg_node = root->ops[1];
@@ -58,11 +59,10 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 call_ret = op->func(subexp, root->ops[2], env);
                 if(URet_state(call_ret) != GOOD)
                     goto apply_Failed;
+                for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
+                    add_gc_mikal(subexp[free_idx]);
             }
-            for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
-                destroy_mikal(subexp[free_idx]);
-
-            destroy_mikal(op);
+            add_gc_mikal(op);
             break;
         case MT_CLOSURE:
             struct env_t *new_env = URet_val(init_env(), struct env_t*);

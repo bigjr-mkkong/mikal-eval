@@ -7,7 +7,6 @@
 enum mikal_types{
     MT_INTEGER,
     MT_SYMBOL,
-    //MT_OPERATOR,
     MT_STRING,      
     MT_CONS,        //list cons
     MT_AST,

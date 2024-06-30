@@ -8,9 +8,10 @@
 #include "errno.h"
 #include "assert.h"
 #include "malloc.h"
+#include "gc.h"
 
 URet copy_mikal(mikal_t *src);
-
+extern gc_buffer gcbuf;
 /*
  * build-in operations:
  * + - * /
@@ -251,6 +252,16 @@ void print_cons(mikal_t *node){
 
 void destroy_cons(mikal_t *node){
     if(!node) return;
+    /*
+     * I'd better find some work aound, now it is not elegant enough
+     * This look exists just to prevent double free
+     */
+    int refcnt = 0;
+    for(int i=0; i<gcbuf.freed_next; i++){
+        if(gcbuf.freed[i] == node) refcnt++;
+    }
+    if(refcnt) return;
+
     if(valid_mikal(node) && node->type != MT_CONS){
         destroy_mikal(node);
         return;
@@ -353,6 +364,12 @@ URet print_mikal(mikal_t *target){
 
 URet destroy_mikal(mikal_t *target){
     URet retval;
+    if(target == NULL){
+        retval.val = 0;
+        retval.error_code = GOOD;
+        return retval;
+    }
+
     if(!valid_mikal(target)){
         retval.val = 0;
         retval.error_code = E_INVAL_TYPE;

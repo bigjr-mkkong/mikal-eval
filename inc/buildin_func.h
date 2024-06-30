@@ -7,4 +7,7 @@ URet mul_mikal(mikal_t **args, ...);
 URet div_mikal(mikal_t **args, ...);
 URet make_clos_mikal(mikal_t **args, ...);
 
+URet car_mikal(mikal_t **args, ...);
+URet cdr_mikal(mikal_t **args, ...);
+URet cons_mikal(mikal_t **args, ...);
 #endif

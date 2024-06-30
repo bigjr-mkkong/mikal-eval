@@ -117,3 +117,72 @@ URet make_clos_mikal(mikal_t **args, ...){
     
     return ret;
 }
+
+URet car_mikal(mikal_t **args, ...){
+    URet ret;
+    mikal_t *src = args[0];
+    if(!src){
+        ret.val = 0;
+        ret.error_code = E_INVAL_ADDR;
+        return ret;
+    }
+
+    if(!valid_mikal(src)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
+
+    mikal_t *car_val = src->car;
+
+    ret.addr = car_val;
+    ret.error_code = GOOD;
+
+    return ret;
+}
+
+
+URet cdr_mikal(mikal_t **args, ...){
+    URet ret;
+    mikal_t *src = args[0];
+    if(!src){
+        ret.val = 0;
+        ret.error_code = E_INVAL_ADDR;
+        return ret;
+    }
+
+    if(!valid_mikal(src)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
+
+    mikal_t *cdr_val = src->cdr;
+
+    ret.addr = cdr_val;
+    ret.error_code = GOOD;
+
+    return ret;
+}
+
+URet cons_mikal(mikal_t **args, ...){
+    URet call_ret;
+    mikal_t *car = args[0];
+    mikal_t *cdr = args[1];
+
+    if(!car || !valid_mikal(car)){
+        call_ret.val = 0;
+        call_ret.error_code = GOOD;
+        return call_ret;
+    }
+    
+    if(!cdr || !valid_mikal(cdr)){
+        call_ret.val = 0;
+        call_ret.error_code = GOOD;
+        return call_ret;
+    }
+
+    call_ret = make_cons(car, cdr);
+
+    return call_ret;
+}
