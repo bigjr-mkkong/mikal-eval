@@ -17,3 +17,4 @@ myc: $(OBJS)
 clean:
 	rm -f *.o run
 	rm checkresult
+	rm *.out

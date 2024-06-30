@@ -491,7 +491,7 @@ enum mikal_types which_mktype(char *str, struct env_t *env){
 
 
 URet copy_mikal(mikal_t *src){
-    URet ret;
+    URet ret, call_ret;
     if(!valid_mikal(src)){
         ret.val = 0;
         ret.error_code = E_INVAL_TYPE;
@@ -526,6 +526,11 @@ URet copy_mikal(mikal_t *src){
         case MT_FUNC:
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
+            break;
+
+        case MT_CONS:
+            call_ret = copy_cons(src);
+            dst = URet_val(call_ret, mikal_t*);
             break;
 
         default:
@@ -568,15 +573,28 @@ URet move_mikal(mikal_t *dst, mikal_t *src){
 }
 
 
-#ifdef SINGLE_FILE_TEST
+#ifdef SINGTEST_MIKAL_TYPE
 
 int main(void){
-    char num[] = "00001234a";
-    URet uret_val = str2ll(num);
-    long long conv_val = URet_val(uret_val, long long);
+    URet call_ret;
+    mikal_t *a, *b, *cons, *cons2, *full_cons;
+    call_ret = make_integer(3);
+    a = URet_val(call_ret, mikal_t*);
 
-    assert(URet_state(uret_val) == GOOD);
-    printf("\n%d\n", conv_val);
+    call_ret = make_integer(4);
+    b = URet_val(call_ret, mikal_t*);
+
+    call_ret = make_cons(a, b);
+    cons = URet_val(call_ret, mikal_t*);
+
+    call_ret = copy_mikal(cons);
+    cons2 = URet_val(call_ret, mikal_t*);
+
+    call_ret = make_cons(cons, cons2);
+    full_cons = URet_val(call_ret, mikal_t*);
+
+    print_mikal(full_cons);
+    destroy_mikal(full_cons);
 }
 
 #endif
