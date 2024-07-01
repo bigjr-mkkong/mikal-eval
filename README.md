@@ -1,6 +1,11 @@
 # mikal-eval
 A simple lisp evaluator for fun
 
+## How to Build & Run
+Clone the repo, then
+
+`make run`
+
 ## Plan
   - [x] Internal type system(mikal)
   - [x] Frontent parser & AST
