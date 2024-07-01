@@ -8,6 +8,9 @@ BINS = $(OBJS:%.o=%)
 
 all: mikal
 
+run: all
+	./run
+
 mikal: $(OBJS)
 	$(CC) $(CFLAGS) -o run $(OBJS)
 
