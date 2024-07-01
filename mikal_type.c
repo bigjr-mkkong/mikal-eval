@@ -20,10 +20,11 @@ extern gc_buffer gcbuf;
  * lambda
  */
 int valid_mikal(mikal_t *addr){
-    if(!addr || addr->magic != MIKAL_MAGIC)
+    if(!addr || addr->magic != MIKAL_MAGIC){
         return 0;
-    else
+    }else{
         return 1;
+    }
 }
 
 URet make_integer(long long x){
@@ -33,6 +34,7 @@ URet make_integer(long long x){
     ret->integer = x;
     ret->type = MT_INTEGER;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -60,6 +62,7 @@ URet make_symbol(char *sym_name){
     strcpy(ret->sym, sym_name);
     ret->type = MT_SYMBOL;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -95,6 +98,7 @@ URet make_string(char *str_name){
 
     ret->type = MT_STRING;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -120,6 +124,10 @@ URet make_cons(mikal_t *car, mikal_t *cdr){
     ret->cdr = cdr;
     ret->type = MT_CONS;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
+
+    car->refcnt++;
+    cdr->refcnt++;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -139,13 +147,14 @@ URet make_ast(struct AST_Node *ast){
     ret->ast = ast;
     ret->type = MT_AST;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
 
     retval.addr = ret;
     retval.error_code = GOOD;
     return retval;
 }
 
-URet make_func(mikal_func func, enum mikal_op_type type){
+URet make_func(mikal_func func, enum mikal_op_type type, enum func_return return_type){
     URet retval;
 
     if(!func){
@@ -158,7 +167,9 @@ URet make_func(mikal_func func, enum mikal_op_type type){
     ret->func = func;
     ret->type = MT_FUNC;
     ret->op_type = type;
+    ret->ret_type = return_type;
     ret->magic = MIKAL_MAGIC;
+    ret->refcnt++;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -183,6 +194,7 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
     mik_clos->magic = MIKAL_MAGIC;
     mik_clos->type = MT_CLOSURE;
     mik_clos->op_type = OP_CLOSURE;
+    mik_clos->refcnt = 1;
 
     memset(clos->args, 0, MAX_PROCARGS * sizeof(mikal_t *));
     int cpidx = 0;
@@ -252,16 +264,6 @@ void print_cons(mikal_t *node){
 
 void destroy_cons(mikal_t *node){
     if(!node) return;
-    /*
-     * I'd better find some work aound, now it is not elegant enough
-     * This look exists just to prevent double free
-     */
-    int refcnt = 0;
-    for(int i=0; i<gcbuf.freed_next; i++){
-        if(gcbuf.freed[i] == node) refcnt++;
-    }
-    if(refcnt) return;
-
     if(valid_mikal(node) && node->type != MT_CONS){
         destroy_mikal(node);
         return;

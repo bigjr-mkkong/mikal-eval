@@ -39,6 +39,7 @@ void PRINT(URet eval_result){
     print_mikal(eval_val);
 
     add_gc_mikal(eval_val);
+
     printf("\n");
     return;
 }
@@ -54,14 +55,14 @@ static void init_meta_env(struct env_t *env){
     mikal_t *car_op = URet_val(make_symbol("car"), mikal_t*);
     mikal_t *cdr_op = URet_val(make_symbol("cdr"), mikal_t*);
     
-    mikal_t *add_func = URet_val(make_func(add_mikal, OP_ARITH), mikal_t*);
-    mikal_t *sub_func = URet_val(make_func(sub_mikal, OP_ARITH), mikal_t*);
-    mikal_t *mul_func = URet_val(make_func(mul_mikal, OP_ARITH), mikal_t*);
-    mikal_t *div_func = URet_val(make_func(div_mikal, OP_ARITH), mikal_t*);
-    mikal_t *lambda_func = URet_val(make_func(make_clos_mikal, OP_LAMBDA), mikal_t*);
-    mikal_t *cons_func = URet_val(make_func(cons_mikal, OP_CONS), mikal_t*);
-    mikal_t *car_func = URet_val(make_func(car_mikal, OP_CONS), mikal_t*);
-    mikal_t *cdr_func = URet_val(make_func(cdr_mikal, OP_CONS), mikal_t*);
+    mikal_t *add_func = URet_val(make_func(add_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
+    mikal_t *sub_func = URet_val(make_func(sub_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
+    mikal_t *mul_func = URet_val(make_func(mul_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
+    mikal_t *div_func = URet_val(make_func(div_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
+    mikal_t *lambda_func = URet_val(make_func(make_clos_mikal, OP_LAMBDA, RETURN_VAL), mikal_t*);
+    mikal_t *cons_func = URet_val(make_func(cons_mikal, OP_CONS, RETURN_VAL), mikal_t*);
+    mikal_t *car_func = URet_val(make_func(car_mikal, OP_CONS, RETURN_REF), mikal_t*);
+    mikal_t *cdr_func = URet_val(make_func(cdr_mikal, OP_CONS, RETURN_REF), mikal_t*);
 
     add_env_entry(env, plus_op, add_func);
     add_env_entry(env, minus_op, sub_func);
@@ -86,9 +87,9 @@ static void init_meta_env(struct env_t *env){
     destroy_mikal(mul_func);
     destroy_mikal(div_func);
     destroy_mikal(lambda_func);
-    destroy_mikal(cons_op);
-    destroy_mikal(car_op);
-    destroy_mikal(cdr_op);
+    destroy_mikal(cons_func);
+    destroy_mikal(car_func);
+    destroy_mikal(cdr_func);
 
     env->fa_env = env;
 

@@ -84,6 +84,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             
             call_ret = eval(clos->root, new_env);
             
+            destroy_env(new_env);
             break;
 
         default:

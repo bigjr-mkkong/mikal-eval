@@ -1,14 +1,14 @@
 CC = gcc
-CFLAGS = -g -O0  -lreadline -I./inc
+CFLAGS = -g -Og  -lreadline -I./inc
 LDFLAGS = -g
 SRCS = main.c reader.c env.c mikal_type.c eval.c buildin_func.c gc.c
 
 OBJS = $(SRCS:%.c=%.o)
 BINS = $(OBJS:%.o=%)
 
-all: myc
+all: mikal
 
-myc: $(OBJS)
+mikal: $(OBJS)
 	$(CC) $(CFLAGS) -o run $(OBJS)
 
 .c.o: $(SRCS)

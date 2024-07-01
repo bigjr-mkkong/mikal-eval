@@ -25,6 +25,12 @@ enum mikal_op_type{
     OP_CLOSURE,
     OP_UNDEF
 };
+
+enum func_return{
+    RETURN_VAL,
+    RETURN_REF,
+};
+
 #include "reader.h"
 
 enum error_cases{
@@ -80,6 +86,8 @@ typedef struct mikal_t{
 
     enum mikal_types type;
     enum mikal_op_type op_type;
+    enum func_return ret_type;
+    int refcnt;
 }mikal_t;
 
 typedef URet (*mikal_func)(mikal_t**, ...);
@@ -96,7 +104,7 @@ URet make_symbol(char *sym_name);
 URet make_string(char *str_name);
 URet make_cons(mikal_t *car, mikal_t *cdr);
 URet make_ast(struct AST_Node *ast);
-URet make_func(mikal_func func, enum mikal_op_type type);
+URet make_func(mikal_func func, enum mikal_op_type type, enum func_return return_type);
 URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env);
 
 URet print_mikal(mikal_t *target);
