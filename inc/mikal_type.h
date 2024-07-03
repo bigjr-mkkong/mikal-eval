@@ -17,13 +17,15 @@ enum mikal_types{
 };
 
 enum mikal_op_type{
-    OP_ENV,
+    OP_UNDEF,
     OP_CONS,
     OP_ARITH,
     OP_BRANCH,
     OP_LAMBDA,
     OP_CLOSURE,
-    OP_UNDEF
+    OP_DEF,
+    OP_LET,
+    OP_SET
 };
 
 enum func_return{

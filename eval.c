@@ -5,6 +5,7 @@
 #include "stdlib.h"
 #include "gc.h"
 URet eval(struct AST_Node *root, struct env_t *env);
+URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env);
 
 int is_leafnode(struct AST_Node *node){
     for(int i=0; i<MAX_CHILD; i++){
@@ -14,6 +15,46 @@ int is_leafnode(struct AST_Node *node){
     }
 
     return 1;
+}
+
+
+URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
+    mikal_t *subexp[MAX_PROCARGS];
+    URet ret, call_ret;
+    memset(subexp, 0, sizeof(mikal_t*) * MAX_PROCARGS);
+    if(op->op_type == OP_DEF || op->op_type == OP_SET){
+        struct AST_Node *key_node = root->ops[1];
+        struct AST_Node *value_node = root->ops[2];
+
+        call_ret = make_symbol(key_node->token.tok);
+        if(URet_state(call_ret) != GOOD)
+            goto apply_env_failed;
+        subexp[0] = URet_val(call_ret, mikal_t*);
+        if(subexp[0]->type != MT_SYMBOL && subexp[0]->type != MT_UNBOND_SYM)
+            goto apply_env_failed;
+
+        call_ret = eval(value_node, env);
+        if(URet_state(call_ret) != GOOD)
+            goto apply_env_failed;
+        subexp[1] = URet_val(call_ret, mikal_t*);
+
+        ret = op->func(subexp, env);
+        if(URet_state(call_ret) != GOOD)
+            goto apply_env_failed;
+
+        add_gc_mikal(subexp[0]);
+        add_gc_mikal(subexp[1]);
+    }else if(op->op_type == OP_LET){
+
+    }else{
+        //should not be here
+    }
+
+    add_gc_mikal(op);
+    return ret;
+
+apply_env_failed:
+    return call_ret;
 }
 
 
@@ -61,6 +102,10 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                     goto apply_Failed;
                 for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
                     add_gc_mikal(subexp[free_idx]);
+            }else if(op->op_type == OP_DEF || \
+                     op->op_type == OP_SET || \
+                     op->op_type == OP_LET){
+                call_ret = apply_env(op, root, env);
             }
             add_gc_mikal(op);
             break;
@@ -202,12 +247,12 @@ URet eval(struct AST_Node *root, struct env_t *env){
     }
     
     int eval_idx = 1;
-    if(operation->op_type != OP_ENV){
+    if(operation->op_type != OP_UNDEF){
         ret = apply(operation, root, env);
         if(URet_state(ret) != GOOD)
             goto eval_Failed;
     }else{
-        printf("%s is not an arithmetic operation\n", operation->op);
+        printf("%s is not defined as a procedure\n", operation->op);
     }
 
     return ret;

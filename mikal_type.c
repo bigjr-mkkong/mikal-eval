@@ -223,28 +223,53 @@ make_closure_Failed:
     free(mik_clos);
 }
 
-/* URet make_cons(mikal_t *car, mikal_t *cdr){ */
-/*     URet ret; */
-/*     if(car || cdr || !valid_mikal(car) || !valid_mikal(cdr)){// for cons, it should allow car/cdr be NULL */
-/*         ret.val = 0; */
-/*         ret.error_code = E_INVAL_TYPE; */
-/*         goto make_cons_failed; */
-/*     } */
+URet copy_clos(mikal_t *src){
+    URet ret, call_ret;
+    if(!src || !valid_mikal(src)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
 
-/*     mikal_t *mikal_cons = malloc(sizeof(mikal_t)); */
-/*     mikal_cons->magic = MIKAL_MAGIC; */
-/*     mikal_cons->type = MT_CONS; */
-/*     mikal_cons->car = car; */
-/*     mikal_cons->cdr = cdr; */
+    mikal_t *new_mikal = (mikal_t*)malloc(sizeof(mikal_t));
+    new_mikal->magic = MIKAL_MAGIC;
+    new_mikal->type = MT_CLOSURE;
+    new_mikal->op_type = OP_CLOSURE;
+    new_mikal->refcnt = 1;
 
-/*     ret.addr = mikal_cons; */
-/*     ret.error_code = GOOD; */
+    new_mikal->clos = (Closure*)malloc(sizeof(Closure));
+    memset(new_mikal->clos, 0, sizeof(Closure));
+    Closure *new_clos = new_mikal->clos;
+    Closure *old_clos = src->clos;
 
-/*     return ret; */
+    new_mikal->clos = new_clos;
+    
+    new_clos->root = copy_ast(old_clos->root);
+    new_clos->env = old_clos->env;
+    
+    ret.addr = new_mikal;
+    ret.error_code = GOOD;
 
-/* make_cons_failed: */
-/*     return ret; */
-/* } */
+    for(int cpidx = 0; cpidx < MAX_PROCARGS; cpidx++){
+        if(!old_clos->args[cpidx]){
+            break;
+        }
+
+        call_ret = copy_mikal(old_clos->args[cpidx]);
+        if(URet_state(call_ret) != GOOD){
+            ret = call_ret;
+            goto copy_clos_Failed;
+        }
+
+        new_clos->args[cpidx] = URet_val(call_ret, mikal_t *);
+    }
+
+    return ret;
+
+copy_clos_Failed:
+    return call_ret;
+
+}
 
 void print_cons(mikal_t *node){
     if(!node) return;
@@ -549,6 +574,11 @@ URet copy_mikal(mikal_t *src){
 
         case MT_CONS:
             call_ret = copy_cons(src);
+            dst = URet_val(call_ret, mikal_t*);
+            break;
+
+        case MT_CLOSURE:
+            call_ret = copy_clos(src);
             dst = URet_val(call_ret, mikal_t*);
             break;
 

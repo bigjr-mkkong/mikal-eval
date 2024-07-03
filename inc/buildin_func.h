@@ -10,4 +10,7 @@ URet make_clos_mikal(mikal_t **args, ...);
 URet car_mikal(mikal_t **args, ...);
 URet cdr_mikal(mikal_t **args, ...);
 URet cons_mikal(mikal_t **args, ...);
+
+URet def_mikal(mikal_t **args, ...);
+URet set_mikal(mikal_t **args, ...);
 #endif

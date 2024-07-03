@@ -1,5 +1,7 @@
 #include "mikal_type.h"
+#include "eval.h"
 #include "stdarg.h"
+#include "gc.h"
 
 URet add_mikal(mikal_t **args, ...){
     URet ret;
@@ -185,4 +187,81 @@ URet cons_mikal(mikal_t **args, ...){
     call_ret = make_cons(car, cdr);
 
     return call_ret;
+}
+
+//URet def_mikal(mikal_t *args, struct env_t *env)
+URet def_mikal(mikal_t **args, ...){
+    URet ret, call_ret;
+
+    mikal_t *sym = args[0];
+    mikal_t *val = args[1];
+    mikal_t *new_sym, *new_val;
+    va_list vvar;
+    va_start(vvar, args);
+
+    struct env_t *env = va_arg(vvar, struct env_t*);
+    va_end(vvar);
+
+    struct env_entry *entry;
+
+    call_ret = lookup_env(env, sym->sym);
+    if(URet_state(call_ret) == E_NOTFOUND){
+
+        /* call_ret = copy_mikal(sym); */
+        /* new_sym = URet_val(call_ret, mikal_t*); */
+
+        /* call_ret = copy_mikal(val); */
+        /* new_val = URet_val(call_ret, mikal_t*); */
+
+        add_env_entry(env, sym, val);
+
+    }else{
+        entry = URet_val(call_ret, struct env_entry*);
+        add_gc_mikal(entry->value);
+
+        call_ret = copy_mikal(val);
+
+        entry->value = URet_val(call_ret, mikal_t*);
+    }
+
+    ret.val = 0;
+    ret.error_code = GOOD;
+
+    return ret;
+}
+
+//URet set_mikal(mikal_t *args, struct env_t *env)
+URet set_mikal(mikal_t **args, ...){
+    URet ret, call_ret;
+
+    mikal_t *sym = args[0];
+    mikal_t *val = args[1];
+    mikal_t *new_sym, *new_val;
+    va_list vvar;
+    va_start(vvar, args);
+
+    struct env_t *env = va_arg(vvar, struct env_t*);
+    va_end(vvar);
+
+    struct env_entry *entry;
+
+    call_ret = lookup_env(env, sym->sym);
+    if(URet_state(call_ret) == E_NOTFOUND){
+        ret.val = 0;
+        ret.error_code = E_FAILED;
+        
+        return ret;
+    }else{
+        entry = URet_val(call_ret, struct env_entry*);
+
+        add_gc_mikal(entry->value);
+        call_ret = copy_mikal(val);
+
+        entry->value = URet_val(call_ret, mikal_t*);
+    }
+
+    ret.val = 0;
+    ret.error_code = GOOD;
+
+    return ret;
 }

@@ -54,6 +54,8 @@ static void init_meta_env(struct env_t *env){
     mikal_t *cons_op = URet_val(make_symbol("cons"), mikal_t*);
     mikal_t *car_op = URet_val(make_symbol("car"), mikal_t*);
     mikal_t *cdr_op = URet_val(make_symbol("cdr"), mikal_t*);
+    mikal_t *def_op = URet_val(make_symbol("def"), mikal_t*);
+    mikal_t *set_op = URet_val(make_symbol("set"), mikal_t*);
     
     mikal_t *add_func = URet_val(make_func(add_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
     mikal_t *sub_func = URet_val(make_func(sub_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
@@ -63,6 +65,8 @@ static void init_meta_env(struct env_t *env){
     mikal_t *cons_func = URet_val(make_func(cons_mikal, OP_CONS, RETURN_VAL), mikal_t*);
     mikal_t *car_func = URet_val(make_func(car_mikal, OP_CONS, RETURN_REF), mikal_t*);
     mikal_t *cdr_func = URet_val(make_func(cdr_mikal, OP_CONS, RETURN_REF), mikal_t*);
+    mikal_t *def_func = URet_val(make_func(def_mikal, OP_DEF, RETURN_REF), mikal_t*);
+    mikal_t *set_func = URet_val(make_func(set_mikal, OP_SET, RETURN_REF), mikal_t*);
 
     add_env_entry(env, plus_op, add_func);
     add_env_entry(env, minus_op, sub_func);
@@ -72,6 +76,8 @@ static void init_meta_env(struct env_t *env){
     add_env_entry(env, car_op, car_func);
     add_env_entry(env, cdr_op, cdr_func);
     add_env_entry(env, cons_op, cons_func);
+    add_env_entry(env, def_op, def_func);
+    add_env_entry(env, set_op, set_func);
     
     destroy_mikal(plus_op);
     destroy_mikal(minus_op);
@@ -81,6 +87,8 @@ static void init_meta_env(struct env_t *env){
     destroy_mikal(cons_op);
     destroy_mikal(car_op);
     destroy_mikal(cdr_op);
+    destroy_mikal(def_op);
+    destroy_mikal(set_op);
     
     destroy_mikal(add_func);
     destroy_mikal(sub_func);
@@ -90,6 +98,8 @@ static void init_meta_env(struct env_t *env){
     destroy_mikal(cons_func);
     destroy_mikal(car_func);
     destroy_mikal(cdr_func);
+    destroy_mikal(def_func);
+    destroy_mikal(set_func);
 
     env->fa_env = env;
 
