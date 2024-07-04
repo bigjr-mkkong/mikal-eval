@@ -118,7 +118,8 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                 //assemble args string into mikal symbol
                 struct AST_Node *arg_node = root->ops[1];
                 for(int argidx = 0; argidx < MAX_PROCARGS && arg_node->ops[argidx]; argidx++){
-                    ret = eval(arg_node->ops[argidx], env);
+                    /* ret = eval(arg_node->ops[argidx], env); */
+                    ret = make_symbol(arg_node->ops[argidx]->token.tok);
                     if(URet_state(ret) != GOOD)
                         goto apply_Failed;
 
