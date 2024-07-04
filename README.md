@@ -15,7 +15,7 @@ Clone the repo, then
   - [x] Lambda and closure
   - [x] `cons/car/cdr`
   - [x] GC
-  - [ ] `def/let/set`
+  - [x] `def/let/set`
   - [ ] quotation
   - [ ] TCO
   - [ ] `if`

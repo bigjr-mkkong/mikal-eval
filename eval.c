@@ -45,7 +45,34 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
         add_gc_mikal(subexp[0]);
         add_gc_mikal(subexp[1]);
     }else if(op->op_type == OP_LET){
+        struct AST_Node *pairs = root->ops[1];
+        struct AST_Node *sym_node, *val_node;
+        struct AST_Node *exp_node = root->ops[2];
 
+        struct env_t *new_env = URet_val(init_env(), struct env_t*);
+        new_env->fa_env = env;
+
+        char *sym_str;
+        mikal_t *sym, *val;
+        for(int i=0; i<MAX_CHILD; i++){
+            if(!pairs->ops[i]) break;
+            sym_str = pairs->ops[i]->ops[0]->token.tok;
+            sym = URet_val(make_symbol(sym_str), mikal_t*);
+            
+            val_node = pairs->ops[i]->ops[1];
+            call_ret = eval(val_node, env);
+            if(URet_state(call_ret) != GOOD)
+                goto apply_env_failed;
+
+            val = URet_val(call_ret, mikal_t*);
+
+            add_env_entry(new_env, sym, val);
+            add_gc_mikal(sym);
+            add_gc_mikal(val);
+        }
+
+        ret = op->func(NULL, exp_node, new_env);
+        
     }else{
         //should not be here
     }
@@ -110,9 +137,11 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             add_gc_mikal(op);
             break;
         case MT_CLOSURE:
-            struct env_t *new_env = URet_val(init_env(), struct env_t*);
-            new_env->fa_env = env;
             struct closure *clos = op->clos;
+
+            struct env_t *new_env = URet_val(init_env(), struct env_t*);
+            new_env->fa_env = clos->env;
+
             int val_idx = 1;
             int sym_idx = 0;
             for(; val_idx<MAX_PROCARGS && root->ops[val_idx]; val_idx++){

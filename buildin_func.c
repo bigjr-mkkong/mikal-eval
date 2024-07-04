@@ -265,3 +265,19 @@ URet set_mikal(mikal_t **args, ...){
 
     return ret;
 }
+
+URet let_mikal(mikal_t **args, ...){
+    struct AST_Node *exp;
+    struct env_t *env;
+
+    va_list vvar;
+    va_start(vvar, args);
+    exp = va_arg(vvar, struct AST_Node*);
+    env = va_arg(vvar, struct env_t*);
+    va_end(vvar);
+
+    URet ret;
+    ret = eval(exp, env);
+
+    return ret;
+}
