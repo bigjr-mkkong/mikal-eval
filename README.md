@@ -11,7 +11,7 @@ Clone the repo, then
   - [x] Frontent parser & AST
   - [x] Basic REPL
   - [x] Environment model
-  - [x] `+ - * /` (Maybe `and or not` in future?)
+  - [x] `+ - * /` (Maybe `or and not` in future?)
   - [x] Lambda and closure
   - [x] `cons/car/cdr`
   - [x] GC
