@@ -56,6 +56,7 @@ URet init_env(void){
     //ret_env->symmap = (struct env_entry**)malloc(sizeof(struct env_entry*) * 64);
 
     ret_env->fa_env = 0;
+    ret_env->ref_cnt = 1;
 
     ret.addr = ret_env;
     ret.error_code = GOOD;

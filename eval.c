@@ -77,7 +77,6 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
         //should not be here
     }
 
-    add_gc_mikal(op);
     return ret;
 
 apply_env_failed:
