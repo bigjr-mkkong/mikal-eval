@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "stdarg.h"
 #include "gc.h"
+#include "stdio.h"
 
 URet add_mikal(mikal_t **args, ...){
     URet ret;
@@ -278,6 +279,38 @@ URet let_mikal(mikal_t **args, ...){
 
     URet ret;
     ret = eval(exp, env);
+
+    return ret;
+}
+
+URet beq_mikal(mikal_t **args, ...){
+    mikal_t *l_val = args[0];
+    mikal_t *r_val = args[1];
+    
+    mikal_t *cmp_result;
+    URet ret;
+
+    if(!valid_mikal(l_val) || !valid_mikal(r_val)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
+
+    int tmp = mikal_cmp(l_val, r_val, 0);
+    
+    cmp_result = URet_val(make_bool((tmp == 0) ? BOOL_FALSE : BOOL_TRUE ), mikal_t *);
+
+    ret.addr = cmp_result;
+    ret.error_code = GOOD;
+
+    return ret;
+}
+
+URet if_mikal(mikal_t **args, ...){
+    URet ret;
+    fprintf(stdout, "placeholder function for if, I will do nothing\n");
+    ret.val = 0;
+    ret.error_code = GOOD;
 
     return ret;
 }

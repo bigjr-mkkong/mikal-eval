@@ -16,9 +16,9 @@ Clone the repo, then
   - [x] `cons/car/cdr`
   - [x] GC
   - [x] `def/let/set`
-  - [ ] quotation
+  - [ ] quotation(`quote` and `eval`)
   - [ ] TCO
-  - [ ] `if`
+  - [x] `if`
   - [ ] Read from file (This should be easy :))
 
 ## "Deferred operations"

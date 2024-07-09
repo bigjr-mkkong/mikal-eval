@@ -94,7 +94,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
     switch(op->type){
         case MT_FUNC:
-            if(op->op_type == OP_ARITH || op->op_type == OP_CONS){
+            if(op->op_type == OP_ARITH || op->op_type == OP_CONS || op->op_type == OP_BOOL){
                 while((eval_idx < MAX_CHILD) && root->ops[eval_idx]){
                     ret = eval(root->ops[eval_idx], env);
                     if(URet_state(ret) != GOOD)
@@ -256,6 +256,7 @@ selfeval_Failed:
 URet eval(struct AST_Node *root, struct env_t *env){
     URet ret;
     mikal_t *operation;
+    mikal_t *tmp_eval;
 
     if(is_leafnode(root)){
         char *tokstr = root->token.tok;
@@ -276,7 +277,20 @@ URet eval(struct AST_Node *root, struct env_t *env){
     }
     
     int eval_idx = 1;
-    if(operation->op_type != OP_UNDEF){
+    if(operation->op_type == OP_IF){
+        ret = eval(root->ops[1], env);
+        tmp_eval = URet_val(ret, mikal_t*);
+        if(tmp_eval->type != MT_BOOL)
+            goto eval_Failed;
+
+        add_gc_mikal(tmp_eval);
+        add_gc_mikal(operation);
+        if(tmp_eval->boolval == BOOL_TRUE){
+            ret = eval(root->ops[2], env);
+        }else{
+            ret = eval(root->ops[3], env);
+        }
+    }else if(operation->op_type != OP_UNDEF){
         ret = apply(operation, root, env);
         if(URet_state(ret) != GOOD)
             goto eval_Failed;

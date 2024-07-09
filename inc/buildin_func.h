@@ -14,4 +14,7 @@ URet cons_mikal(mikal_t **args, ...);
 URet def_mikal(mikal_t **args, ...);
 URet set_mikal(mikal_t **args, ...);
 URet let_mikal(mikal_t **args, ...);
+
+URet beq_mikal(mikal_t **args, ...);
+URet if_mikal(mikal_t **args, ...);
 #endif

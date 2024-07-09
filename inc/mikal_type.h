@@ -5,6 +5,7 @@
 #define ROUND_UP(x) (((x) + 8) & (~7))
 
 enum mikal_types{
+    MT_NONE,
     MT_INTEGER,
     MT_SYMBOL,
     MT_STRING,      
@@ -13,7 +14,7 @@ enum mikal_types{
     MT_FUNC,
     MT_CLOSURE,
     MT_UNBOND_SYM,
-    MT_NONE
+    MT_BOOL
 };
 
 enum mikal_op_type{
@@ -25,7 +26,9 @@ enum mikal_op_type{
     OP_CLOSURE,
     OP_DEF,
     OP_LET,
-    OP_SET
+    OP_SET,
+    OP_BOOL,
+    OP_IF
 };
 
 enum func_return{
@@ -48,6 +51,11 @@ enum error_cases{
     E_NOTFOUND,
     E_FAILED,
     E_UNDEF
+};
+
+enum mt_bool{
+    BOOL_TRUE,
+    BOOL_FALSE
 };
 
 typedef struct uret{
@@ -77,6 +85,7 @@ typedef struct mikal_t{
         char *str;
         char *op;
         URet (*func)(struct mikal_t**, ...);
+        enum mt_bool boolval;
     };
 
     struct mikal_t *car;
@@ -104,6 +113,7 @@ URet make_integer(long long x);
 URet make_symbol(char *sym_name);
 //URet make_operator(char *op_name);
 URet make_string(char *str_name);
+URet make_bool(enum mt_bool val);
 URet make_cons(mikal_t *car, mikal_t *cdr);
 URet make_ast(struct AST_Node *ast);
 URet make_func(mikal_func func, enum mikal_op_type type, enum func_return return_type);
@@ -114,7 +124,7 @@ URet destroy_mikal(mikal_t *target);
 URet move_mikal(mikal_t *dst, mikal_t *src);
 URet copy_mikal(mikal_t *src);
 
-int mikal_cmp(mikal_t *val1, mikal_t *val2);
+int mikal_cmp(mikal_t *val1, mikal_t *val2, struct env_t *env);
 
 enum mikal_op_type which_op(char *str, struct env_t *env);
 enum mikal_types which_mktype(char *str, struct env_t *env);

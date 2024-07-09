@@ -223,6 +223,20 @@ make_closure_Failed:
     free(mik_clos);
 }
 
+URet make_bool(enum mt_bool val){
+    URet retval;
+
+    mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
+    ret->boolval = val;
+    ret->type = MT_BOOL;
+    ret->magic = MIKAL_MAGIC;
+    ret->refcnt = 1;
+
+    retval.addr = ret;
+    retval.error_code = GOOD;
+    return retval;
+}
+
 URet copy_clos(mikal_t *src){
     URet ret, call_ret;
     if(!src || !valid_mikal(src)){
@@ -381,6 +395,11 @@ URet print_mikal(mikal_t *target){
             print_cons(target);
             break;
 
+        case MT_BOOL:
+            fprintf(stdout, "%s\n", (target->boolval == BOOL_FALSE)? \
+                        "FALSE":"TRUE");
+            break;
+
         default:
             ret.error_code = E_CASE_UNIMPL;
             break; 
@@ -407,6 +426,10 @@ URet destroy_mikal(mikal_t *target){
     retval.error_code = GOOD;
     switch(target->type){
         case MT_INTEGER:
+            free(target);
+            break;
+
+        case MT_BOOL:
             free(target);
             break;
 
@@ -451,10 +474,15 @@ URet destroy_mikal(mikal_t *target){
     return retval;
 }
 
-int mikal_cmp(mikal_t *val1, mikal_t *val2){
+/*
+ * Currently only support integer and string
+ */
+int mikal_cmp(mikal_t *val1, mikal_t *val2, struct env_t *env){
     int cmp_result;
+    URet call_ret;
+    mikal_t *tmp1, *tmp2;
     if(val1->type != val2->type){
-        cmp_result = -1;
+        cmp_result = 0;
         return cmp_result;
     }else{
         switch(val1->type){
@@ -463,7 +491,24 @@ int mikal_cmp(mikal_t *val1, mikal_t *val2){
                 break;
 
             case MT_SYMBOL:
-                cmp_result = !(strcmp(val1->sym, val2->sym));
+                if(!env){
+                    cmp_result = 0;
+                    break;
+                }else{
+                    call_ret = lookup_env(env, val1->sym);
+                    struct env_entry *ent1 = URet_val(call_ret, struct env_entry*);
+                    tmp1 = ent1->value;
+
+                    call_ret = lookup_env(env, val2->sym);
+                    struct env_entry *ent2 = URet_val(call_ret, struct env_entry*);
+                    tmp2 = ent2->value;
+
+                    cmp_result = mikal_cmp(tmp1, tmp2, env);
+                    break;
+                }
+
+            case MT_STRING:
+                cmp_result = !(strcmp(val1->str, val2->str));
                 break;
 
             default:
@@ -580,6 +625,11 @@ URet copy_mikal(mikal_t *src){
         case MT_CLOSURE:
             call_ret = copy_clos(src);
             dst = URet_val(call_ret, mikal_t*);
+            break;
+
+        case MT_BOOL:
+            dst = malloc(sizeof(mikal_t));
+            memcpy(dst, src, sizeof(mikal_t));
             break;
 
         default:

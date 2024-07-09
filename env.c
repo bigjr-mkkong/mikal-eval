@@ -64,7 +64,7 @@ URet init_env(void){
 }
 
 void destroy_env(struct env_t *env){
-    if(env->ref_cnt > 0){
+    if(env->ref_cnt > 1){
         env->ref_cnt--;
         return;
     }
