@@ -30,3 +30,11 @@ Clone the repo, then
 
 ## How to run first naive test
   After compilation, use `cat fib-test | ./run` to run fibonacci test
+
+## Supported basic operations:
+  -  `+ - * /`
+  -  `lambda`
+  -  `cons car cdr`
+  -  `define set let`
+  -  `= < >`
+  -  `if`
