@@ -19,7 +19,7 @@ Clone the repo, then
   - [ ] quotation(`quote` and `eval`)
   - [ ] TCO
   - [x] `if`
-  - [x] Read from file (This should be easy :)) <== Done by using pipe
+  - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
 
 ## "Deferred operations"
   1. Memory leaks when evaluate lambda expression
@@ -27,3 +27,6 @@ Clone the repo, then
   3. Type system is not fully closed
   4. Proper testbench and tests
   5. Comments on some confusing functions
+
+## How to run first naive test
+  After compilation, use `cat fib-test | ./run` to run fibonacci test
