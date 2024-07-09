@@ -1,13 +1,13 @@
 //#define SINGTEST_MIKAL_TYPE
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <assert.h>
+#include <malloc.h>
 #include "mikal_type.h"
-#include "stdlib.h"
-#include "string.h"
 #include "env.h"
-#include "stdio.h"
-#include "errno.h"
-#include "assert.h"
-#include "malloc.h"
 #include "gc.h"
 
 URet copy_mikal(mikal_t *src);

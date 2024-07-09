@@ -19,7 +19,7 @@ Clone the repo, then
   - [ ] quotation(`quote` and `eval`)
   - [ ] TCO
   - [x] `if`
-  - [ ] Read from file (This should be easy :))
+  - [x] Read from file (This should be easy :)) <== Done by using pipe
 
 ## "Deferred operations"
   1. Memory leaks when evaluate lambda expression

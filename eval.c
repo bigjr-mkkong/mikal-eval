@@ -1,8 +1,8 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "reader.h"
 #include "env.h"
-#include "stdio.h"
-#include "string.h"
-#include "stdlib.h"
 #include "gc.h"
 URet eval(struct AST_Node *root, struct env_t *env);
 URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env);

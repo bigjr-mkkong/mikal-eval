@@ -1,7 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include "mikal_type.h"
-#include "stdlib.h"
 #include "gc.h"
-#include "stdio.h"
 
 gc_buffer gcbuf;
 

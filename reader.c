@@ -1,16 +1,16 @@
-#include "stdio.h"
-#include "string.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/param.h>
 #include "reader.h"
 #include "env.h"
-#include <sys/param.h>
 
 #define MAX_SYM     512
 
 //#define READER_TEST
 
 static char *parens[] = {"{", "}", "(", ")", "[", "]"};
-static char special_char[] = {'[', ']', '{', '}', '(', ')', '\'', ' ', '\"', '`', ';'};
+static char special_char[] = {'[', ']', '{', '}', '(', ')', '\'', ' ', '\"', '`', ';', '\t'};
 static int is_special_char(int ch){
     for(int i=0; i<sizeof(special_char); i++){
         if(ch == special_char[i]){
@@ -62,11 +62,10 @@ struct Reader *tokenize(char *line){
     int next = 0;
     int token_len = 0;
     for(; line[next] != '\0';){
-        if(line[next] == ' ' || line[next] == ','){
+        if(line[next] == ' ' || line[next] == ',' || line[next] == '\t'){
             next += 1;
             continue;
         }
-
         if(next < (line_len-1) && (line[next] == '~' && line[next+1] == '@')){
             memcpy((token_list[wrtpt].tok), &(line[next]), 2);
             

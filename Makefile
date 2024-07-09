@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Og -I./inc -lreadline -D LREADLINE
+CFLAGS = -g -Og -I./inc # -lreadline -D LREADLINE
 LDFLAGS = -g
 SRCS = main.c reader.c env.c mikal_type.c eval.c buildin_func.c gc.c
 

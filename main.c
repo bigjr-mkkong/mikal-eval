@@ -1,12 +1,13 @@
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "mikal_type.h"
 #include "reader.h"
 #include "env.h"
 #include "eval.h"
 #include "buildin_func.h"
 #include "gc.h"
-#include "string.h"
 
 #ifdef LREADLINE
     #include "readline/readline.h"
@@ -15,30 +16,38 @@
 extern gc_buffer gcbuf;
 
 #ifndef LREADLINE
-static int readline(char *buf){
-    int pt = 0;
+static char* readline(char *prompt){
+    printf("%s", prompt);
+    fflush(stdout);
+    char *buf = (char*)malloc(256);
+    memset(buf, 0, 256);
     char ch;
-    while((ch = (char)getc(stdin)) && ch != EOF){
-        if(ch == '\n') break;
+    int pt = 0, paren_match = 0;
+    while(read(0, &ch, 1)){
+        if(ch == '\n')
+            if(!paren_match) break;
+            else continue;
+
+        if(ch == '(') paren_match--;
+        else if(ch == ')') paren_match++;
+
         buf[pt] = ch;
         pt++;
     }
 
-    return pt;
+    if(pt == 0){
+        free(buf);
+        return NULL;
+    }
+    
+    return buf;
 }
 #endif
 
 
 struct AST_Node *READ(char *prompt){
     char *user_in;
-#ifdef LREADLINE
     user_in = readline(prompt);
-#else
-    user_in = (char*)malloc(128);
-    memset(user_in, 0, 128);
-    fprintf(stdout, "%s", prompt);
-    readline(user_in);
-#endif
     if(user_in == NULL){
         return NULL;
     }
@@ -79,11 +88,14 @@ static void init_meta_env(struct env_t *env){
     mikal_t *cons_op = URet_val(make_symbol("cons"), mikal_t*);
     mikal_t *car_op = URet_val(make_symbol("car"), mikal_t*);
     mikal_t *cdr_op = URet_val(make_symbol("cdr"), mikal_t*);
-    mikal_t *def_op = URet_val(make_symbol("def"), mikal_t*);
+    mikal_t *def_op = URet_val(make_symbol("define"), mikal_t*);
     mikal_t *set_op = URet_val(make_symbol("set"), mikal_t*);
     mikal_t *let_op = URet_val(make_symbol("let"), mikal_t*);
     mikal_t *beq_op = URet_val(make_symbol("="), mikal_t*);
+    mikal_t *blt_op = URet_val(make_symbol("<"), mikal_t*);
+    mikal_t *bgt_op = URet_val(make_symbol(">"), mikal_t*);
     mikal_t *if_op = URet_val(make_symbol("if"), mikal_t*);
+
     
     mikal_t *add_func = URet_val(make_func(add_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
     mikal_t *sub_func = URet_val(make_func(sub_mikal, OP_ARITH, RETURN_VAL), mikal_t*);
@@ -97,6 +109,8 @@ static void init_meta_env(struct env_t *env){
     mikal_t *set_func = URet_val(make_func(set_mikal, OP_SET, RETURN_REF), mikal_t*);
     mikal_t *let_func = URet_val(make_func(let_mikal, OP_LET, RETURN_REF), mikal_t*);
     mikal_t *beq_func = URet_val(make_func(beq_mikal, OP_BOOL, RETURN_VAL), mikal_t*);
+    mikal_t *blt_func = URet_val(make_func(blt_mikal, OP_BOOL, RETURN_VAL), mikal_t*);
+    mikal_t *bgt_func = URet_val(make_func(bgt_mikal, OP_BOOL, RETURN_VAL), mikal_t*);
     mikal_t *if_func = URet_val(make_func(if_mikal, OP_IF, RETURN_VAL), mikal_t*);
 
     add_env_entry(env, plus_op, add_func);
@@ -111,6 +125,8 @@ static void init_meta_env(struct env_t *env){
     add_env_entry(env, set_op, set_func);
     add_env_entry(env, let_op, let_func);
     add_env_entry(env, beq_op, beq_func);
+    add_env_entry(env, blt_op, blt_func);
+    add_env_entry(env, bgt_op, bgt_func);
     add_env_entry(env, if_op, if_func);
     
     destroy_mikal(plus_op);
@@ -125,6 +141,8 @@ static void init_meta_env(struct env_t *env){
     destroy_mikal(set_op);
     destroy_mikal(let_op);
     destroy_mikal(beq_op);
+    destroy_mikal(blt_op);
+    destroy_mikal(bgt_op);
     destroy_mikal(if_op);
     
     destroy_mikal(add_func);
@@ -139,6 +157,8 @@ static void init_meta_env(struct env_t *env){
     destroy_mikal(set_func);
     destroy_mikal(let_func);
     destroy_mikal(beq_func);
+    destroy_mikal(blt_func);
+    destroy_mikal(bgt_func);
     destroy_mikal(if_func);
 
     env->fa_env = env;
