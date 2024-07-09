@@ -8,7 +8,7 @@ Clone the repo, then
 
 ## Plan
   - [x] Internal type system(mikal)
-  - [x] Frontent parser & AST
+  - [x] Frontend parser & AST
   - [x] Basic REPL
   - [x] Environment model
   - [x] `+ - * /` (Maybe `or and not` in future?)
