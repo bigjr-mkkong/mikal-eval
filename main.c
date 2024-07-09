@@ -2,18 +2,43 @@
 #include "stdlib.h"
 #include "mikal_type.h"
 #include "reader.h"
-#include "readline/readline.h"
 #include "env.h"
 #include "eval.h"
 #include "buildin_func.h"
 #include "gc.h"
+#include "string.h"
+
+#ifdef LREADLINE
+    #include "readline/readline.h"
+#endif
 
 extern gc_buffer gcbuf;
 
+#ifndef LREADLINE
+static int readline(char *buf){
+    int pt = 0;
+    char ch;
+    while((ch = (char)getc(stdin)) && ch != EOF){
+        if(ch == '\n') break;
+        buf[pt] = ch;
+        pt++;
+    }
+
+    return pt;
+}
+#endif
+
+
 struct AST_Node *READ(char *prompt){
     char *user_in;
+#ifdef LREADLINE
     user_in = readline(prompt);
-
+#else
+    user_in = (char*)malloc(128);
+    memset(user_in, 0, 128);
+    fprintf(stdout, "%s", prompt);
+    readline(user_in);
+#endif
     if(user_in == NULL){
         return NULL;
     }
