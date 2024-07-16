@@ -1,0 +1,13 @@
+(define bar
+    (lambda (x)
+        x
+    )
+)
+(define foo
+    (lambda (x)
+        (
+            bar x
+        )
+    )
+)
+(foo 1)

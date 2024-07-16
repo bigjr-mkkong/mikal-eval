@@ -62,7 +62,19 @@ URet init_env(void){
     return ret;
 }
 
+void destroy_meta_env(struct env_t *env){
+    for(int i=0; i<env->next; i++){
+        free_env_slot(env, i);
+    }
+    free(env);
+}
+
 void destroy_env(struct env_t *env){
+    /*
+     * Ignore if this is meta env, meta_env can only been destroyed by destroy_meta_env()
+     * its not elegant, gonna try to came out another solution
+     */
+    if(env->fa_env == env) return; 
     if(env->ref_cnt > 1){
         env->ref_cnt--;
         return;

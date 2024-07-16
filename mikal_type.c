@@ -210,6 +210,7 @@ URet make_closure(mikal_t *args[], struct AST_Node *root, struct env_t *env){
 
     clos->root = copy_ast(root);
     clos->env = env;
+    clos->env->ref_cnt++;
 
     ret.addr = mik_clos;
     ret.error_code = GOOD;
@@ -260,6 +261,7 @@ URet copy_clos(mikal_t *src){
     
     new_clos->root = copy_ast(old_clos->root);
     new_clos->env = old_clos->env;
+    new_clos->env->ref_cnt++;
     
     ret.addr = new_mikal;
     ret.error_code = GOOD;
@@ -456,6 +458,12 @@ URet destroy_mikal(mikal_t *target){
 
             AST_destroy(tmp_clos->root);
             tmp_clos->env->ref_cnt--;
+            if(tmp_clos->env->ref_cnt <= 1){
+                destroy_env(tmp_clos->env);
+            }
+            
+            free(target->clos);
+            free(target);
             break;
 
         case MT_AST:

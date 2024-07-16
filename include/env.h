@@ -21,6 +21,7 @@ void remove_env_entry(struct env_t *env, int idx);
 URet lookup_env(struct env_t *env, char *name);
 URet lookup_single_env(struct env_t *env,  char *name);
 void destroy_env(struct env_t *env);
+void destroy_meta_env(struct env_t *env);
 int is_global_env(struct env_t *env);
 
 

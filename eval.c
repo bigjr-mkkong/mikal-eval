@@ -150,6 +150,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                     goto apply_Failed;
 
                 subexp[val_idx-1] = URet_val(ret, mikal_t*);
+                add_gc_mikal(subexp[val_idx-1]);
             }
 
             for(; sym_idx<MAX_PROCARGS && clos->args[sym_idx]; sym_idx++){
@@ -159,6 +160,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             call_ret = eval(clos->root, new_env);
             
             destroy_env(new_env);
+            add_gc_mikal(op);
             break;
 
         default:
@@ -294,6 +296,8 @@ URet eval(struct AST_Node *root, struct env_t *env){
         ret = apply(operation, root, env);
         if(URet_state(ret) != GOOD)
             goto eval_Failed;
+
+        /* add_gc_mikal(operation); */
     }else{
         printf("%s is not defined as a procedure\n", operation->op);
     }

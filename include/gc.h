@@ -1,7 +1,7 @@
 #ifndef __MIKAL_GC_H__
 #define __MIKAL_GC_H__
 
-#define MAX_GC_RECORDS      256
+#define MAX_GC_RECORDS      512
 
 typedef struct gc_buffer{
     mikal_t **mikal_gc;
