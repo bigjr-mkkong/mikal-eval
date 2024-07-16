@@ -22,14 +22,14 @@ Clone the repo, then
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
 
 ## "Deferred operations"
-  1. Memory leaks when evaluate lambda expression
+  1. TCO is kinda urgent, gc buffer will be quickly overflowed without TCO
   2. Error handling & report
   3. Type system is not fully closed
   4. Proper testbench and tests
   5. Comments on some confusing functions
 
 ## How to run first naive test
-  After compilation, use `cat fib-test | ./run` to run fibonacci test
+  After compilation, use `cat tests/fib-test | ./run` to run fibonacci test
 
 ## Supported basic operations:
   -  `+ - * /`
