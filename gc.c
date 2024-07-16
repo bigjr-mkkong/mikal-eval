@@ -33,6 +33,7 @@ URet add_gc_mikal(mikal_t *addr){
     if(gcbuf.next_pt >= gcbuf.max_mikal){
         ret.val = 0;
         ret.error_code = E_NOSPACE_LEFT;
+        fprintf(stderr, "GC buffer overflowed!\n");
         return ret;
     }
 
