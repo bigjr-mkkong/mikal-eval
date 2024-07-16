@@ -10,7 +10,7 @@
 //#define READER_TEST
 
 static char *parens[] = {"{", "}", "(", ")", "[", "]"};
-static char special_char[] = {'[', ']', '{', '}', '(', ')', '\'', ' ', '\"', '`', ';', '\t'};
+static char special_char[] = {'[', ']', '{', '}', '(', ')', '\'', ' ', '`', ';', '\t'};
 static int is_special_char(int ch){
     for(int i=0; i<sizeof(special_char); i++){
         if(ch == special_char[i]){
