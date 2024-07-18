@@ -20,6 +20,7 @@ Clone the repo, then
   - [ ] TCO
   - [x] `if`
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
+  - [ ] `write`
 
 ## "Deferred operations"
   1. TCO is kinda urgent, gc buffer will be quickly overflowed without TCO
@@ -35,6 +36,6 @@ Clone the repo, then
   -  `+ - * /`
   -  `lambda`
   -  `cons car cdr`
-  -  `define set let`
+  -  `define set! let`
   -  `= < >`
   -  `if`

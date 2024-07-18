@@ -17,6 +17,9 @@ mikal: $(OBJS)
 .c.o: $(SRCS)
 	$(CC) -c $(CFLAGS) $*.c
 
+tests: all
+	cd tests && python testall.py --ans-test
+
 clean:
 	rm -f *.o run
 	rm checkresult
