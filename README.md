@@ -22,6 +22,7 @@ Clone the repo, then
   - [x] `if`
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
   - [ ] `write`, `remainder`
+  - [ ] Comments
 
 ## "Deferred operations"
   1. TCO is kinda urgent, gc buffer will be quickly overflowed without TCO
