@@ -58,7 +58,9 @@ URet make_symbol(char *sym_name){
     }
     
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
-    ret->sym = (char*)calloc(1, ROUND_UP(sizeof(name_len)));
+    /* ret->sym = (char*)calloc(1, ROUND_UP(sizeof(name_len))); */
+    ret->sym = (char*)malloc(ROUND_UP(sizeof(name_len)));
+    memset(ret->sym, 0, ROUND_UP(sizeof(name_len)));
     strcpy(ret->sym, sym_name);
     ret->type = MT_SYMBOL;
     ret->magic = MIKAL_MAGIC;
@@ -86,7 +88,9 @@ URet make_string(char *str_name){
     }
     
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
-    ret->str = (char*)calloc(1, ROUND_UP(sizeof(name_len + 8)));
+    /* ret->str = (char*)calloc(1, ROUND_UP(sizeof(name_len + 8))); */
+    ret->str = (char*)malloc(ROUND_UP(sizeof(name_len + 8)));
+    memset(ret->str, 0, ROUND_UP(sizeof(name_len + 8)));
     
     if(name_len >= 2 && str_name[0] == '\"' && str_name[name_len-1] == '\"'){
         strcpy(ret->str, str_name);
@@ -603,7 +607,9 @@ URet copy_mikal(mikal_t *src){
             len = strlen(src->str);
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
-            dst->str = (char*)calloc(1, ROUND_UP(len));
+            /* dst->str = (char*)calloc(1, ROUND_UP(len)); */
+            dst->str = (char*)malloc(ROUND_UP(len));
+            memset(dst->str, 0, ROUND_UP(len));
             strcpy(dst->str, src->str);
             break;
 
@@ -611,7 +617,9 @@ URet copy_mikal(mikal_t *src){
             len = strlen(src->sym);
             dst = malloc(sizeof(mikal_t));
             memcpy(dst, src, sizeof(mikal_t));
-            dst->str = (char*)calloc(1, ROUND_UP(len));
+            /* dst->str = (char*)calloc(1, ROUND_UP(len)); */
+            dst->str = (char*)malloc(ROUND_UP(len));
+            memset(dst->str, 0, ROUND_UP(len));
             strcpy(dst->sym, src->sym);
             break; 
 

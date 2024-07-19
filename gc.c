@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "mikal_type.h"
 #include "gc.h"
 
@@ -13,7 +14,9 @@ URet init_gcbuffer(int size){
         return ret;
     }
 
-    gcbuf.mikal_gc = (mikal_t**)calloc(1, sizeof(mikal_t*) * size);
+    /* gcbuf.mikal_gc = (mikal_t**)calloc(1, sizeof(mikal_t*) * size); */
+    gcbuf.mikal_gc = (mikal_t**)malloc(sizeof(mikal_t) * size);
+    memset(gcbuf.mikal_gc, 0, sizeof(mikal_t) * size);
     gcbuf.next_pt = 0;
     gcbuf.max_mikal = size;
 

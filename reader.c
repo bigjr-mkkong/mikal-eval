@@ -54,8 +54,12 @@ static int get_token_len(char *st){
 struct Reader *tokenize(char *line){
     int line_len = strlen(line);
     
-    struct Reader *token_reader = calloc(1, sizeof(struct Reader)); 
-    token_reader->token_list = (struct Token*)calloc(512, sizeof(struct Token));
+    /* struct Reader *token_reader = calloc(1, sizeof(struct Reader)); */ 
+    struct Reader *token_reader = malloc(sizeof(struct Reader));
+    memset(token_reader, 0, sizeof(struct Reader));
+    /* token_reader->token_list = (struct Token*)calloc(512, sizeof(struct Token)); */
+    token_reader->token_list = (struct Token*)malloc(sizeof(struct Token) * 512);
+    memset(token_reader->token_list, 0, sizeof(struct Token) * 512);
     struct Token *token_list = token_reader->token_list;
     int wrtpt = 0;
     
@@ -106,7 +110,9 @@ static void destroy_reader(struct Reader *tk_reader){
 
 
 struct AST_Node *AST_Node_create(struct Token *tok, struct AST_Node **ops, int isleaf){
-    struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node));
+    /* struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node)); */
+    struct AST_Node *new_node = (struct AST_Node*)malloc(sizeof(struct AST_Node));
+    memset(new_node, 0, sizeof(struct AST_Node));
 
     for(int i=0; i<64; i++)
         new_node->ops[i] = NULL;
@@ -212,7 +218,9 @@ void print_ast(struct AST_Node *root){
 }
 
 struct AST_Node *copy_ast(struct AST_Node *root){
-    struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node));
+    /* struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node)); */
+    struct AST_Node *new_node = (struct AST_Node*)malloc(sizeof(struct AST_Node));
+    memset(new_node, 0, sizeof(struct AST_Node));
     memcpy(new_node, root, sizeof(struct AST_Node));
     for(int i=0; i<MAX_CHILD; i++){
         if(root->ops[i]){
