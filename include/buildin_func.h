@@ -19,4 +19,5 @@ URet beq_mikal(mikal_t **args, ...);
 URet blt_mikal(mikal_t **args, ...);
 URet bgt_mikal(mikal_t **args, ...);
 URet if_mikal(mikal_t **args, ...);
+URet remainder_mikal(mikal_t **args, ...);
 #endif

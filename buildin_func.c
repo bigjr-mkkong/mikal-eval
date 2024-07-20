@@ -366,3 +366,36 @@ URet if_mikal(mikal_t **args, ...){
 
     return ret;
 }
+
+URet remainder_mikal(mikal_t **args, ...){
+    URet ret;
+    
+    mikal_t *arg1 = args[0];
+    mikal_t *arg2 = args[1];
+
+    if(!valid_mikal(arg1) || !valid_mikal(arg2)){
+        ret.val = 0;
+        ret.error_code = E_INVAL_ADDR;
+        return ret;
+    }
+
+    if(arg1->type != MT_INTEGER || arg2->type != MT_INTEGER){
+        ret.val = 0;
+        ret.error_code = E_INVAL_TYPE;
+        return ret;
+    }
+
+    if(arg2->integer == 0){
+        ret.val = 0;
+        ret.error_code = E_ARITH_ERROR;
+        return ret;
+    }
+
+    int rem = arg1->integer % arg2->integer;
+
+    mikal_t *rem_result = URet_val(make_integer(rem), mikal_t *);
+    ret.addr = rem_result;
+    ret.error_code = GOOD;
+
+    return ret;
+}
