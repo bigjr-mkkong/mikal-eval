@@ -21,7 +21,7 @@ Clone the repo, then
   - [ ] TCO
   - [x] `if`
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
-  - [ ] `write`, `remainder`
+  - [x] `remainder`
   - [ ] Comments
 
 ## "Deferred operations"
