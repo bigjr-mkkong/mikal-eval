@@ -44,7 +44,7 @@ Clone the repo, then
   
 
 ## Supported basic operations:
-  -  `+ - * /`
+  -  `+ - * / remainder`
   -  `lambda`
   -  `cons car cdr`
   -  `define set! let`
