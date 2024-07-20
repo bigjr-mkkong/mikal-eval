@@ -18,6 +18,8 @@ char prompt[128];
 
 #ifndef LREADLINE
 static char* readline(char *prompt){
+    int flag = 0;
+
     printf("%s", prompt);
     fflush(stdout);
     char *buf = (char*)malloc(256);
@@ -25,6 +27,7 @@ static char* readline(char *prompt){
     char ch;
     int pt = 0, paren_match = 0;
     while(read(0, &ch, 1)){
+        flag = 1;
         if(ch == '\n')
             if(!paren_match) break;
             else continue;
@@ -36,25 +39,36 @@ static char* readline(char *prompt){
         pt++;
     }
 
-    if(pt == 0){
+    if(!flag){
         free(buf);
         return NULL;
     }
-    
     return buf;
 }
 #endif
 
 
-struct AST_Node *READ(char *prompt){
+URet READ(char *prompt){
+    URet ret;
     char *user_in;
     user_in = readline(prompt);
     if(user_in == NULL){
-        return NULL;
+        ret.val = 0;
+        ret.error_code = E_FAILED;
+        return ret;
+    }
+
+    if(strlen(user_in) <= 0){
+        ret.val = 0;
+        ret.error_code = E_EMPTY;
+        return ret;
     }
 
     struct AST_Node *AST_root = line_reader(user_in);
-    return AST_root;
+
+    ret.addr = AST_root;
+    ret.error_code = GOOD;
+    return ret;
 }
 
 
@@ -128,18 +142,18 @@ static void toggle_args(int argc, char *argv[]){
                     break;
 
                 default:
-                    snprintf(prompt, sizeof(prompt), "user> ");
+                    snprintf(prompt, sizeof(prompt), "\nuser> ");
                     break;
             }
         }else{
-            snprintf(prompt, sizeof(prompt), "user> ");
+            snprintf(prompt, sizeof(prompt), "\nuser> ");
             //open file
         }
         
     }
     
     if(!toggled){
-        snprintf(prompt, sizeof(prompt), "user> ");
+        snprintf(prompt, sizeof(prompt), "\nuser> ");
     }
 
     return;
@@ -149,6 +163,7 @@ static void toggle_args(int argc, char *argv[]){
 int main(int argc, char *argv[]){
 
     struct AST_Node *ast;
+    URet ret;
 
     URet eval_result, call_ret;
     toggle_args(argc, argv);
@@ -158,11 +173,16 @@ int main(int argc, char *argv[]){
 
     init_gcbuffer(MAX_GC_RECORDS);
     while(1){
-        ast = READ(prompt);
+        ret = READ(prompt);
 
-        if(ast == NULL){
+        if(URet_state(ret) == E_FAILED){
             break;
         }
+        if(URet_state(ret) == E_EMPTY){
+            continue;
+        }
+
+        ast = URet_val(ret, struct AST_Node *);
         eval_result = EVAL(ast, meta_env);
         PRINT(eval_result);
         AST_destroy(ast);

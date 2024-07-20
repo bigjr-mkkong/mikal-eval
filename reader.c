@@ -53,6 +53,9 @@ static int get_token_len(char *st){
 
 struct Reader *tokenize(char *line){
     int line_len = strlen(line);
+
+    if(line_len <= 0)
+        return NULL;
     
     struct Reader *token_reader = calloc(1, sizeof(struct Reader)); 
     token_reader->token_list = (struct Token*)calloc(512, sizeof(struct Token));
