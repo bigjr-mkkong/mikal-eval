@@ -47,7 +47,7 @@ OBJS = $(SRCS:%.c=%.o)
 # EXECUTABLES = run
 start: all
 
-all: run
+all: eval
 
 CFLAGS = -c -I/usr/include -I${XCOMP}/include -G0 -I./include
 
@@ -55,7 +55,7 @@ CFLAGS = -c -I/usr/include -I${XCOMP}/include -G0 -I./include
 #if it is not used, the linker generates too many sections of assembly
 #code and then coff2noff fails to convert the file
 
-run: ${OBJS} ${CRT} ${ASSIST} ${LIBSYS} ${LIBC}
+eval: ${OBJS} ${CRT} ${ASSIST} ${LIBSYS} ${LIBC}
 	${LD} ${LDFLAGS} -o $@.coff ${CRT} ${ASSIST} ${OBJS} ${LIBS}
 	${C2N} $@.coff $@
 
