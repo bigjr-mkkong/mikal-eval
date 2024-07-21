@@ -1,0 +1,66 @@
+# Makefile for KOS Binaries
+# Michael A. Puening  Modified by Kim Buckner and Matthew Allen
+
+CLASS=/cs/faculty/rich/cs170
+
+XCOMP = $(CLASS)/xcomp
+
+XCOMP_BIN=$(XCOMP)/bin
+
+CC = ${XCOMP_BIN}/decstation-ultrix-gcc
+
+LD = ${XCOMP_BIN}/decstation-ultrix-ld
+
+AR = ${XCOMP_BIN}/decstation-ultrix-ar
+
+AS = ${XCOMP_BIN}/decstation-ultrix-as
+
+RANLIB = ${XCOMP_BIN}/decstation-ultrix-ranlib
+
+C2N = ${XCOMP_BIN}/coff2noff
+
+ 
+
+SUPPORT=${XCOMP}/lib
+
+CRT = ${SUPPORT}/crt0.o
+
+ASSIST = ${SUPPORT}/assist.o
+
+LIBSYS = ${SUPPORT}/libsys.a
+
+LIBC = ${SUPPORT}/libc.a
+
+LDFLAGS = -G0 -T ${SUPPORT}/noff.ld -N -L${XCOMP}/lib
+
+LIBS = $(LIBC) $(LIBSYS)
+
+# CFLAGS = -c -I${XCOMP}/include -G0
+#ENSURE that the -G0 option is used for linker and the compiler
+#if it is not used, the linker generates too many sections of assembly
+#code and then coff2noff fails to convert the file
+
+# EXECUTABLES = evil_test good_test test0
+SRCS = main.c reader.c env.c mikal_type.c eval.c buildin_func.c gc.c helpers.c
+OBJS = $(SRCS:%.c=%.o)
+
+# EXECUTABLES = run
+start: all
+
+all: run
+
+CFLAGS = -c -I/usr/include -I${XCOMP}/include -G0 -I./include
+
+#ENSURE that the -G0 option is used for linker and the compiler
+#if it is not used, the linker generates too many sections of assembly
+#code and then coff2noff fails to convert the file
+
+run: ${OBJS} ${CRT} ${ASSIST} ${LIBSYS} ${LIBC}
+	${LD} ${LDFLAGS} -o $@.coff ${CRT} ${ASSIST} ${OBJS} ${LIBS}
+	${C2N} $@.coff $@
+
+.c.o: ${SRCS}
+	${CC} ${CFLAGS} $*.c
+
+clean:
+	/bin/rm -f *.s *.o *.coff run core a.out

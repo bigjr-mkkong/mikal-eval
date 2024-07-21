@@ -4,6 +4,7 @@
 #include <sys/param.h>
 #include "reader.h"
 #include "env.h"
+#include "helpers.h"
 
 #define MAX_SYM     512
 
@@ -12,7 +13,8 @@
 static char *parens[] = {"{", "}", "(", ")", "[", "]"};
 static char special_char[] = {'[', ']', '{', '}', '(', ')', '\'', ' ', '`', ';', '\t'};
 static int is_special_char(int ch){
-    for(int i=0; i<sizeof(special_char); i++){
+    int i;
+    for(i=0; i<sizeof(special_char); i++){
         if(ch == special_char[i]){
             return 1;
         }
@@ -21,17 +23,19 @@ static int is_special_char(int ch){
 }
 
 static int get_token_len(char *st){
-    for(int i=0; i<sizeof(special_char); i++){
+    int i;
+    int endpt = 1;
+
+    for(i=0; i<sizeof(special_char); i++){
         if(*st == special_char[i]){
             return 1;
         }
     }
-    int endpt = 1;
     if(*st == '\"'){
         while((st[endpt] != '\"') || ((st[endpt] == '\"') && (st[endpt-1] == '\\'))){
             endpt++;
             if(st[endpt] == 0){
-                fprintf(stderr, "String not close\n");
+                printf("String not close\n");
                 return -1;
             }
         }
@@ -52,19 +56,25 @@ static int get_token_len(char *st){
 }
 
 struct Reader *tokenize(char *line){
-    int line_len = strlen(line);
-    
+    int line_len;
+    struct Reader *token_reader;
+    struct Token *token_list;
+    int wrtpt;
+    int next;
+    int token_len;
+
+    line_len = strlen(line);
     /* struct Reader *token_reader = calloc(1, sizeof(struct Reader)); */ 
-    struct Reader *token_reader = malloc(sizeof(struct Reader));
-    memset(token_reader, 0, sizeof(struct Reader));
+    token_reader = malloc(sizeof(struct Reader));
+    memset_new(token_reader, 0, sizeof(struct Reader));
     /* token_reader->token_list = (struct Token*)calloc(512, sizeof(struct Token)); */
     token_reader->token_list = (struct Token*)malloc(sizeof(struct Token) * 512);
-    memset(token_reader->token_list, 0, sizeof(struct Token) * 512);
-    struct Token *token_list = token_reader->token_list;
-    int wrtpt = 0;
-    
-    int next = 0;
-    int token_len = 0;
+    memset_new(token_reader->token_list, 0, sizeof(struct Token) * 512);
+    token_list = token_reader->token_list;
+
+    wrtpt = 0;
+    next = 0;
+    token_len = 0;
     for(; line[next] != '\0';){
         if(line[next] == ' ' || line[next] == ',' || line[next] == '\t'){
             next += 1;
@@ -110,11 +120,12 @@ static void destroy_reader(struct Reader *tk_reader){
 
 
 struct AST_Node *AST_Node_create(struct Token *tok, struct AST_Node **ops, int isleaf){
+    int i;
     /* struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node)); */
     struct AST_Node *new_node = (struct AST_Node*)malloc(sizeof(struct AST_Node));
-    memset(new_node, 0, sizeof(struct AST_Node));
+    memset_new(new_node, 0, sizeof(struct AST_Node));
 
-    for(int i=0; i<64; i++)
+    for(i=0; i<64; i++)
         new_node->ops[i] = NULL;
 
     if(tok != NULL)
@@ -125,10 +136,11 @@ struct AST_Node *AST_Node_create(struct Token *tok, struct AST_Node **ops, int i
 }
 
 void AST_destroy(struct AST_Node *root){
+    int i;
     if(root == NULL){
         return;
     }
-    for(int i=0; i<64; i++){
+    for(i=0; i<64; i++){
         if(root->ops[i] != NULL){
             AST_destroy(root->ops[i]);
         }
@@ -140,26 +152,31 @@ void AST_destroy(struct AST_Node *root){
 
 struct AST_Node *AST_create(struct Reader *tk_reader, int begin, int end){
     struct Token *tk_list = tk_reader->token_list;
-    
     struct AST_Node *ops[64];
-    memset(ops, 0, sizeof(void*) * 64);
+    int idx;
+
+    int subexp_start;
+    int subexp_paren_cnt;
+
+    int ops_pt;
+    int paren_match;
+    struct Token *tok;
+
+    subexp_start = 0;
+    subexp_paren_cnt = 0;
+    ops_pt = 0;  
+
+
+    memset_new(ops, 0, sizeof(void*) * 64);
     
     if(begin == end){
         return AST_Node_create(&(tk_list[begin]), ops, 1);
     }
 
-    int idx = begin;
-
-    int subexp_start = 0;
-    int subexp_paren_cnt = 0;
-
-    int ops_pt = 0;  
-
-    int paren_match;
-
+    idx = begin;
     for(;idx < end; ops_pt++){
         idx++;
-        struct Token *tok = &(tk_list[idx]);     
+        tok = &(tk_list[idx]);     
 
         if(tok->type != TOKEN_LPAREN && tok->type !=TOKEN_RPAREN){
             subexp_paren_cnt = 0;
@@ -184,7 +201,7 @@ struct AST_Node *AST_create(struct Reader *tk_reader, int begin, int end){
             }
 
             if(paren_match == 0){
-                fprintf(stderr, "epression not close\n");
+                printf("epression not close\n");
                 return NULL;
             }
         }else{
@@ -198,6 +215,8 @@ struct AST_Node *AST_create(struct Reader *tk_reader, int begin, int end){
 }
 
 void print_ast(struct AST_Node *root){
+    struct AST_Node *pt;
+    int i;
     if(!root) return;
 
     if(root->ops[0] == NULL){
@@ -205,10 +224,10 @@ void print_ast(struct AST_Node *root){
         return;
     }
     
-    struct AST_Node *pt = root->ops[0];
+    pt = root->ops[0];
 
     printf("(");
-    for(int i=0; i<64 && pt; i++, pt = root->ops[i]){
+    for(i=0; i<64 && pt; i++, pt = root->ops[i]){
         print_ast(pt);
         printf(" ");
     }
@@ -218,11 +237,12 @@ void print_ast(struct AST_Node *root){
 }
 
 struct AST_Node *copy_ast(struct AST_Node *root){
+    int i;
     /* struct AST_Node *new_node = (struct AST_Node*)calloc(1, sizeof(struct AST_Node)); */
     struct AST_Node *new_node = (struct AST_Node*)malloc(sizeof(struct AST_Node));
-    memset(new_node, 0, sizeof(struct AST_Node));
+    memset_new(new_node, 0, sizeof(struct AST_Node));
     memcpy(new_node, root, sizeof(struct AST_Node));
-    for(int i=0; i<MAX_CHILD; i++){
+    for(i=0; i<MAX_CHILD; i++){
         if(root->ops[i]){
             new_node->ops[i] = copy_ast(root->ops[i]);
         }
@@ -232,11 +252,15 @@ struct AST_Node *copy_ast(struct AST_Node *root){
 }
 
 struct AST_Node *line_reader(char *line){
-    struct Reader *tk_reader = tokenize(line);
+    struct Reader *tk_reader;
+    struct AST_Node *AST_root;
+
+    tk_reader = tokenize(line);
+
     if(tk_reader == NULL)
         return NULL;
 
-    struct AST_Node *AST_root = AST_create(tk_reader, 0, MAX(0, tk_reader->max_token-1));
+    AST_root = AST_create(tk_reader, 0, MAX(0, tk_reader->max_token-1));
     
     destroy_reader(tk_reader);
     free(line);

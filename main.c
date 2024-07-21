@@ -8,6 +8,7 @@
 #include "eval.h"
 #include "buildin_func.h"
 #include "gc.h"
+#include "helpers.h"
 
 #ifdef LREADLINE
     #include "readline/readline.h"
@@ -18,12 +19,15 @@ char prompt[128];
 
 #ifndef LREADLINE
 static char* readline(char *prompt){
-    printf("%s", prompt);
-    fflush(stdout);
-    char *buf = (char*)malloc(256);
-    memset(buf, 0, 256);
+    char *buf;
     char ch;
-    int pt = 0, paren_match = 0;
+    int pt, paren_match;
+
+    printf("%s\n", prompt);
+    buf = (char*)malloc(256);
+    memset_new(buf, 0, 256);
+    pt = 0;
+    paren_match = 0;
     while(read(0, &ch, 1)){
         if(ch == '\n')
             if(!paren_match) break;
@@ -48,28 +52,33 @@ static char* readline(char *prompt){
 
 struct AST_Node *READ(char *prompt){
     char *user_in;
+    struct AST_Node *AST_root;
+
     user_in = readline(prompt);
     if(user_in == NULL){
         return NULL;
     }
 
-    struct AST_Node *AST_root = line_reader(user_in);
+    AST_root = line_reader(user_in);
     return AST_root;
 }
 
 
 URet EVAL(struct AST_Node *root, struct env_t *env){
-    URet ret = eval(root, env);
+    URet ret;
+    ret = eval(root, env);
     
     return ret;
 }
 
 void PRINT(URet eval_result){
+    mikal_t *eval_val;
+
     if(URet_state(eval_result) != GOOD){
-        fprintf(stderr, "Failed to evaluate\n");
+        printf("Failed to evaluate\n");
     }
 
-    mikal_t *eval_val = URet_val(eval_result, mikal_t*);
+    eval_val = URet_val(eval_result, mikal_t*);
 
     print_mikal(eval_val);
 
@@ -117,29 +126,35 @@ static void init_meta_env(struct env_t *env){
 
 static void toggle_args(int argc, char *argv[]){
     char *argstr;
-    int toggled = 0;
-    for(int i=1; i<argc; i++){
+    int toggled, i;
+
+    toggled = 0;
+    for(i=1; i<argc; i++){
         toggled = 1;
         argstr = argv[i];
         if(argstr[0] == '-'){
             switch (argstr[1]){
                 case 'q':
-                    snprintf(prompt, sizeof(prompt), "");
+                    /* snprintf(prompt, sizeof(prompt), ""); */
+                    strcpy(prompt, "");
                     break;
 
                 default:
-                    snprintf(prompt, sizeof(prompt), "user> ");
+                    /* snprintf(prompt, sizeof(prompt), "user> "); */
+                    strcpy(prompt, "user> ");
                     break;
             }
         }else{
-            snprintf(prompt, sizeof(prompt), "user> ");
+            /* snprintf(prompt, sizeof(prompt), "user> "); */
+            strcpy(prompt, "user> ");
             //open file
         }
         
     }
     
     if(!toggled){
-        snprintf(prompt, sizeof(prompt), "user> ");
+        /* snprintf(prompt, sizeof(prompt), "user> "); */
+        strcpy(prompt, "user> ");
     }
 
     return;
@@ -147,12 +162,12 @@ static void toggle_args(int argc, char *argv[]){
 
 
 int main(int argc, char *argv[]){
-
     struct AST_Node *ast;
-
     URet eval_result, call_ret;
+    struct env_t *meta_env;
+
     toggle_args(argc, argv);
-    struct env_t *meta_env = URet_val(init_env(), struct env_t*);
+    meta_env = URet_val(init_env(), struct env_t*);
     
     init_meta_env(meta_env);
 

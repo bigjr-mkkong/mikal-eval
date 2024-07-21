@@ -59,10 +59,10 @@ enum mt_bool{
 };
 
 typedef struct uret{
-    union{
-        long long val;
+    union ret_union_t{
+        long val;
         void *addr;
-    };
+    } ret_union;
     enum error_cases error_code;
 }URet;
 
@@ -78,15 +78,15 @@ typedef struct closure{
 
 
 typedef struct mikal_t{
-    long long magic;
-    union{
-        long long integer;
+    long magic;
+    union mk_data_t{
+        long integer;
         char *sym;
         char *str;
         char *op;
         URet (*func)(struct mikal_t**, ...);
         enum mt_bool boolval;
-    };
+    } mk_data;
 
     struct mikal_t *car;
     struct mikal_t *cdr;
@@ -103,13 +103,13 @@ typedef struct mikal_t{
 
 typedef URet (*mikal_func)(mikal_t**, ...);
 
-#define URet_val(x, type)    ((type)((x).val))
+#define URet_val(x, type)    ((type)((x).ret_union.val))
 #define URet_state(x)       ((x).error_code)
 
 #include "env.h"
 
 int valid_mikal(mikal_t *addr);
-URet make_integer(long long x);
+URet make_integer(long x);
 URet make_symbol(char *sym_name);
 //URet make_operator(char *op_name);
 URet make_string(char *str_name);

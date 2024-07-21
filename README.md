@@ -21,8 +21,9 @@ Clone the repo, then
   - [ ] TCO
   - [x] `if`
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
-  - [ ] `write`, `remainder`
+  - [x] `remainder`
   - [ ] Comments
+  - [x] Compatible with kos(cs170 final project)
 
 ## "Deferred operations"
   1. TCO is kinda urgent, gc buffer will be quickly overflowed without TCO
@@ -44,9 +45,9 @@ Clone the repo, then
   
 
 ## Supported basic operations:
-  -  `+ - * /`
+  -  `+ - * / remainder`
   -  `lambda`
   -  `cons car cdr`
   -  `define set! let`
-  -  `= < >`
+  -  `= < >` (Only for integers and symbols which are linked to integers)
   -  `if`

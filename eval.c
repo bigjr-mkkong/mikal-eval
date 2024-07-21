@@ -4,11 +4,14 @@
 #include "reader.h"
 #include "env.h"
 #include "gc.h"
+#include "helpers.h"
+
 URet eval(struct AST_Node *root, struct env_t *env);
 URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env);
 
 int is_leafnode(struct AST_Node *node){
-    for(int i=0; i<MAX_CHILD; i++){
+    int i;
+    for(i=0; i<MAX_CHILD; i++){
         if(node->ops[i]){
             return 0;
         }
@@ -21,10 +24,17 @@ int is_leafnode(struct AST_Node *node){
 URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
     mikal_t *subexp[MAX_PROCARGS];
     URet ret, call_ret;
-    memset(subexp, 0, sizeof(mikal_t*) * MAX_PROCARGS);
+    struct AST_Node *key_node, *value_node; 
+    struct AST_Node *pairs, *sym_node, *exp_node;
+    struct env_t *new_env;
+    char *sym_str;
+    mikal_t *sym, *val;
+    int i;
+
+    memset_new(subexp, 0, sizeof(mikal_t*) * MAX_PROCARGS);
     if(op->op_type == OP_DEF || op->op_type == OP_SET){
-        struct AST_Node *key_node = root->ops[1];
-        struct AST_Node *value_node = root->ops[2];
+        key_node = root->ops[1];
+        value_node = root->ops[2];
 
         call_ret = make_symbol(key_node->token.tok);
         if(URet_state(call_ret) != GOOD)
@@ -38,29 +48,26 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
             goto apply_env_failed;
         subexp[1] = URet_val(call_ret, mikal_t*);
 
-        ret = op->func(subexp, env);
+        ret = op->mk_data.func(subexp, env);
         if(URet_state(call_ret) != GOOD)
             goto apply_env_failed;
 
         add_gc_mikal(subexp[0]);
         add_gc_mikal(subexp[1]);
     }else if(op->op_type == OP_LET){
-        struct AST_Node *pairs = root->ops[1];
-        struct AST_Node *sym_node, *val_node;
-        struct AST_Node *exp_node = root->ops[2];
+        pairs = root->ops[1];
+        exp_node = root->ops[2];
 
-        struct env_t *new_env = URet_val(init_env(), struct env_t*);
+        new_env = URet_val(init_env(), struct env_t*);
         new_env->fa_env = env;
 
-        char *sym_str;
-        mikal_t *sym, *val;
-        for(int i=0; i<MAX_CHILD; i++){
+        for(i=0; i<MAX_CHILD; i++){
             if(!pairs->ops[i]) break;
             sym_str = pairs->ops[i]->ops[0]->token.tok;
             sym = URet_val(make_symbol(sym_str), mikal_t*);
             
-            val_node = pairs->ops[i]->ops[1];
-            call_ret = eval(val_node, env);
+            value_node = pairs->ops[i]->ops[1];
+            call_ret = eval(value_node, env);
             if(URet_state(call_ret) != GOOD)
                 goto apply_env_failed;
 
@@ -71,7 +78,7 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
             add_gc_mikal(val);
         }
 
-        ret = op->func(NULL, exp_node, new_env);
+        ret = op->mk_data.func(NULL, exp_node, new_env);
         
     }else{
         //should not be here
@@ -86,11 +93,20 @@ apply_env_failed:
 
 URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
     URet ret, call_ret;
-    int eval_idx = 1;
-    int free_idx = 0;
+    int eval_idx;
+    int free_idx;
+    int argidx;
     mikal_t *subexp[MAX_CHILD];
+    struct AST_Node *arg_node;
+    struct closure *clos;
+    int val_idx;
+    int sym_idx;
+    struct env_t *new_env;
+    
+    eval_idx = 1;
+    free_idx = 0;
 
-    memset(subexp, 0, sizeof(mikal_t*) * MAX_CHILD);
+    memset_new(subexp, 0, sizeof(mikal_t*) * MAX_CHILD);
 
     switch(op->type){
         case MT_FUNC:
@@ -104,19 +120,19 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
                     eval_idx++;
                 }
 
-                call_ret = op->func(subexp);
+                call_ret = op->mk_data.func(subexp);
                 if(URet_state(call_ret) != GOOD)
                     goto apply_Failed;
 
-                call_ret.addr = URet_val(call_ret, mikal_t *);
+                call_ret.ret_union.addr = URet_val(call_ret, mikal_t *);
                 call_ret.error_code = GOOD;
 
                 for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
                     add_gc_mikal(subexp[free_idx]);
             }else if(op->op_type == OP_LAMBDA){
                 //assemble args string into mikal symbol
-                struct AST_Node *arg_node = root->ops[1];
-                for(int argidx = 0; argidx < MAX_PROCARGS && arg_node->ops[argidx]; argidx++){
+                arg_node = root->ops[1];
+                for(argidx = 0; argidx < MAX_PROCARGS && arg_node->ops[argidx]; argidx++){
                     /* ret = eval(arg_node->ops[argidx], env); */
                     ret = make_symbol(arg_node->ops[argidx]->token.tok);
                     if(URet_state(ret) != GOOD)
@@ -124,7 +140,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
                     subexp[argidx] = URet_val(ret, mikal_t*);
                 }
-                call_ret = op->func(subexp, root->ops[2], env);
+                call_ret = op->mk_data.func(subexp, root->ops[2], env);
                 if(URet_state(call_ret) != GOOD)
                     goto apply_Failed;
                 for(; subexp[free_idx] && free_idx < MAX_CHILD; free_idx++)
@@ -137,13 +153,13 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             add_gc_mikal(op);
             break;
         case MT_CLOSURE:
-            struct closure *clos = op->clos;
+            clos = op->clos;
 
-            struct env_t *new_env = URet_val(init_env(), struct env_t*);
+            new_env = URet_val(init_env(), struct env_t*);
             new_env->fa_env = clos->env;
 
-            int val_idx = 1;
-            int sym_idx = 0;
+            val_idx = 1;
+            sym_idx = 0;
             for(; val_idx<MAX_PROCARGS && root->ops[val_idx]; val_idx++){
                 ret = eval(root->ops[val_idx], env);
                 if(URet_state(ret) != GOOD)
@@ -164,7 +180,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             break;
 
         default:
-           call_ret.val = 0;
+           call_ret.ret_union.val = 0;
            call_ret.error_code = E_CASE_UNIMPL;
            break;
     }
@@ -172,7 +188,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
     return call_ret;
 
 apply_Failed:
-    call_ret.val = 0;
+    call_ret.ret_union.val = 0;
     call_ret.error_code = E_FAILED;
     return call_ret;
 
@@ -185,7 +201,7 @@ URet self_eval(char *tokstr, struct env_t *env){
 
     m_type = which_mktype(tokstr, env);
     if(m_type == MT_NONE){
-        ret.val = 0;
+        ret.ret_union.val = 0;
         ret.error_code = E_INVAL_TYPE;
         return ret;
     }
@@ -195,11 +211,11 @@ URet self_eval(char *tokstr, struct env_t *env){
             if(URet_state(call_ret) != GOOD) 
                 goto selfeval_Failed;
             
-            call_ret = make_integer(URet_val(call_ret, long long));
+            call_ret = make_integer(URet_val(call_ret, long));
             if(URet_state(call_ret) != GOOD)
                 goto selfeval_Failed;
 
-            ret.val = URet_val(call_ret, long long);
+            ret.ret_union.val = URet_val(call_ret, long);
             ret.error_code = GOOD;
             break;
  
@@ -212,7 +228,6 @@ URet self_eval(char *tokstr, struct env_t *env){
             break;
 
         case MT_SYMBOL:
-            mikal_t *val;
             call_ret = lookup_env(env, tokstr);
             if(URet_state(call_ret) == GOOD){
                 val = URet_val(call_ret, struct env_entry*)->value;
@@ -221,7 +236,7 @@ URet self_eval(char *tokstr, struct env_t *env){
                 if(URet_state(call_ret) != GOOD)
                     goto selfeval_Failed;
 
-                ret.addr = URet_val(call_ret, mikal_t*);
+                ret.ret_union.addr = URet_val(call_ret, mikal_t*);
                 ret.error_code = GOOD;
                 return ret;
             }else if(URet_state(call_ret) == E_NOTFOUND){
@@ -238,12 +253,12 @@ URet self_eval(char *tokstr, struct env_t *env){
             break; 
 
         case MT_UNBOND_SYM:
-            ret.addr = URet_val(make_symbol(tokstr), void *);
+            ret.ret_union.addr = URet_val(make_symbol(tokstr), void *);
             ret.error_code = GOOD;
             break;
 
         default:
-            ret.val = 0;
+            ret.ret_union.val = 0;
             ret.error_code = E_CASE_UNIMPL;
             break;
     }
@@ -259,6 +274,7 @@ URet eval(struct AST_Node *root, struct env_t *env){
     URet ret;
     mikal_t *operation;
     mikal_t *tmp_eval;
+    int eval_idx;
 
     if(is_leafnode(root)){
         char *tokstr = root->token.tok;
@@ -273,12 +289,12 @@ URet eval(struct AST_Node *root, struct env_t *env){
     operation = URet_val(ret, mikal_t*);
 
     if(operation->type != MT_FUNC && operation->type != MT_CLOSURE){
-        ret.val = 0;
+        ret.ret_union.val = 0;
         ret.error_code = E_FAILED;
         goto eval_Failed;
     }
     
-    int eval_idx = 1;
+    eval_idx = 1;
     if(operation->op_type == OP_IF){
         ret = eval(root->ops[1], env);
         tmp_eval = URet_val(ret, mikal_t*);
@@ -287,7 +303,7 @@ URet eval(struct AST_Node *root, struct env_t *env){
 
         add_gc_mikal(tmp_eval);
         add_gc_mikal(operation);
-        if(tmp_eval->boolval == BOOL_TRUE){
+        if(tmp_eval->mk_data.boolval == BOOL_TRUE){
             ret = eval(root->ops[2], env);
         }else{
             ret = eval(root->ops[3], env);
@@ -299,7 +315,7 @@ URet eval(struct AST_Node *root, struct env_t *env){
 
         /* add_gc_mikal(operation); */
     }else{
-        printf("%s is not defined as a procedure\n", operation->op);
+        printf("%s is not defined as a procedure\n", operation->mk_data.op);
     }
 
     return ret;
