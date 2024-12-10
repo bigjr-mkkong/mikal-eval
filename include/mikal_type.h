@@ -28,7 +28,8 @@ enum mikal_op_type{
     OP_LET,
     OP_SET,
     OP_BOOL,
-    OP_IF
+    OP_IF,
+    OP_ASSERT
 };
 
 enum func_return{

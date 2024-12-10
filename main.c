@@ -122,6 +122,7 @@ static void init_meta_env(struct env_t *env){
     add_meta_bound(env, ">", bgt_mikal, OP_BOOL, RETURN_VAL);
     add_meta_bound(env, "if", if_mikal, OP_IF, RETURN_VAL);
     add_meta_bound(env, "remainder", remainder_mikal, OP_ARITH, RETURN_VAL);
+    add_meta_bound(env, "assert", assert_mikal, OP_ARITH, RETURN_VAL);
 
 
     env->fa_env = env;

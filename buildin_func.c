@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include "unistd.h"
 #include "mikal_type.h"
 #include "eval.h"
 #include "gc.h"
@@ -398,4 +399,38 @@ URet remainder_mikal(mikal_t **args, ...){
     ret.error_code = GOOD;
 
     return ret;
+}
+
+URet assert_mikal(mikal_t **args, ...){
+    URet ret;
+
+    mikal_t *ret_mikal = URet_val(make_bool(BOOL_TRUE), mikal_t *);
+
+    va_list vvar;
+    va_start(vvar, args);
+
+    struct env_t *env = va_arg(vvar, struct env_t*);
+
+    mikal_t *arg1 = args[0];
+    mikal_t *arg2 = args[1];
+    
+    if(!valid_mikal(arg1) || !valid_mikal(arg2)){
+        fprintf(stderr, "Assertion failed: illegal argument type\n");
+        _exit(-1);
+    }
+
+    if(arg1->type != arg2->type){
+        fprintf(stderr, "Assertion failed: arguments have different type\n");
+        _exit(-1);
+    }
+
+    if(mikal_cmp(arg1, arg2, env)){
+        ret.val = (long long)ret_mikal;
+        ret.error_code = GOOD;
+        return ret;
+    }else{
+        fprintf(stderr, "Assertion failed: they are not same\n");
+        _exit(-1);
+    }
+
 }
