@@ -22,6 +22,7 @@ Clone the repo, then
   - [x] `if`
   - [x] Read from file ~~(This should be easy :))~~ Done by using pipe
   - [x] `remainder`
+  - [x] `assert`
   - [ ] Comments
 
 ## "Deferred operations"
@@ -50,3 +51,4 @@ Clone the repo, then
   -  `define set! let`
   -  `= < >`
   -  `if`
+  -  `assert`
