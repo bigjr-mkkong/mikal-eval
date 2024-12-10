@@ -1,15 +1,18 @@
-(+ 1 1)
+(assert (= (+ 1 1) 2))
 
-(- 1 1)
-(* 1 1)
+(assert (= (- 1 1) 0))
 
-(/ 1 1)
-(+ (+ 2 3) (+ 3 4))
+(assert (= (* 1 1) 1))
 
+(assert (= (/ 1 1) 1))
 
+(assert (= (+ (+ 2 3) (+ 3 4)) 12))
 
-(- (+ 3 4) (* 1 2) (/ 4 2))
-(remainder 4 3)
-(remainder 3 4)
-(remainder 4 2)
+(assert (= (- (+ 3 4) (* 1 2) (/ 4 2)) 3))
+
+(assert (= (remainder 4 3) 1))
+
+(assert (= (remainder 3 4) 3))
+
+(assert (= (remainder 4 2) 0))
 

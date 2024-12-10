@@ -519,6 +519,13 @@ int mikal_cmp(mikal_t *val1, mikal_t *val2, struct env_t *env){
                 cmp_result = !(strcmp(val1->str, val2->str));
                 break;
 
+            case MT_CONS:
+                /*
+                 * TODO
+                 * Implement mikal_cmp over (cons) type
+                 */
+                break;
+
             default:
                 cmp_result = -1;
                 break;
