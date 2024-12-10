@@ -1,5 +1,5 @@
 # mikal-eval
-A simple lisp evaluator for fun
+A simple scheme evaluator for fun
 
 ## How to Build & Run
 Clone the repo, then
