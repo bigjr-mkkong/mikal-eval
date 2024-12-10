@@ -406,31 +406,19 @@ URet assert_mikal(mikal_t **args, ...){
 
     mikal_t *ret_mikal = URet_val(make_bool(BOOL_TRUE), mikal_t *);
 
-    va_list vvar;
-    va_start(vvar, args);
-
-    struct env_t *env = va_arg(vvar, struct env_t*);
-
     mikal_t *arg1 = args[0];
-    mikal_t *arg2 = args[1];
     
-    if(!valid_mikal(arg1) || !valid_mikal(arg2)){
-        fprintf(stderr, "Assertion failed: illegal argument type\n");
-        _exit(-1);
-    }
-
-    if(arg1->type != arg2->type){
-        fprintf(stderr, "Assertion failed: arguments have different type\n");
-        _exit(-1);
-    }
-
-    if(mikal_cmp(arg1, arg2, env)){
-        ret.val = (long long)ret_mikal;
+    if(arg1->type != MT_BOOL){
+        ret.addr = arg1;
         ret.error_code = GOOD;
-        return ret;
+    }else if(arg1->boolval == BOOL_FALSE){
+        fprintf(stderr, "assertion failed\n");
+        _exit(0);
     }else{
-        fprintf(stderr, "Assertion failed: they are not same\n");
-        _exit(-1);
+        ret.addr = arg1;
+        ret.error_code = GOOD;
     }
+
+    return ret;
 
 }
