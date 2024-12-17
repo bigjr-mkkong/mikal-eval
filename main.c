@@ -117,12 +117,14 @@ static void init_meta_env(struct env_t *env){
     add_meta_bound(env, "define", def_mikal, OP_DEF, RETURN_REF);
     add_meta_bound(env, "let", let_mikal, OP_LET, RETURN_REF);
     add_meta_bound(env, "set!", set_mikal, OP_SET, RETURN_REF);
-    add_meta_bound(env, "=", beq_mikal, OP_BOOL, RETURN_VAL);
-    add_meta_bound(env, "<", blt_mikal, OP_BOOL, RETURN_VAL);
-    add_meta_bound(env, ">", bgt_mikal, OP_BOOL, RETURN_VAL);
+    add_meta_bound(env, "=?", beq_mikal, OP_BOOL, RETURN_VAL);
+    add_meta_bound(env, "<?", blt_mikal, OP_BOOL, RETURN_VAL);
+    add_meta_bound(env, ">?", bgt_mikal, OP_BOOL, RETURN_VAL);
+    add_meta_bound(env, "not", not_mikal, OP_ARITH, RETURN_VAL);
     add_meta_bound(env, "if", if_mikal, OP_IF, RETURN_VAL);
     add_meta_bound(env, "remainder", remainder_mikal, OP_ARITH, RETURN_VAL);
     add_meta_bound(env, "assert", assert_mikal, OP_ARITH, RETURN_VAL);
+    add_meta_bound(env, "help", help_mikal, OP_ARITH, RETURN_VAL);
 
 
     env->fa_env = env;
@@ -160,6 +162,7 @@ static void toggle_args(int argc, char *argv[]){
     return;
 }
 
+struct env_t *meta_env;
 
 int main(int argc, char *argv[]){
 
@@ -168,7 +171,7 @@ int main(int argc, char *argv[]){
 
     URet eval_result, call_ret;
     toggle_args(argc, argv);
-    struct env_t *meta_env = URet_val(init_env(), struct env_t*);
+    meta_env = URet_val(init_env(), struct env_t*);
     
     init_meta_env(meta_env);
 

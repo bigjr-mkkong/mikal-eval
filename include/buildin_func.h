@@ -21,4 +21,6 @@ URet bgt_mikal(mikal_t **args, ...);
 URet if_mikal(mikal_t **args, ...);
 URet remainder_mikal(mikal_t **args, ...);
 URet assert_mikal(mikal_t **args, ...);
+URet help_mikal(mikal_t **args, ...);
+URet not_mikal(mikal_t **args, ...);
 #endif

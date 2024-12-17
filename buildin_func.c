@@ -5,6 +5,8 @@
 #include "eval.h"
 #include "gc.h"
 
+extern struct env_t *meta_env;
+
 URet add_mikal(mikal_t **args, ...){
     URet ret;
     long long sum = 0;
@@ -416,6 +418,52 @@ URet assert_mikal(mikal_t **args, ...){
         _exit(0);
     }else{
         ret.addr = arg1;
+        ret.error_code = GOOD;
+    }
+
+    return ret;
+
+}
+
+URet help_mikal(mikal_t **args, ...){
+    URet ret;
+    struct env_entry *env_ent;
+
+    fprintf(stdout, "Supported operations:\n");
+
+    for(int i=0; i<64; i++){
+        env_ent = meta_env->symmap[i];
+        if(env_ent == NULL){
+            continue;
+        }
+
+        fprintf(stdout, "%s\n", env_ent->symbol->sym);
+    }
+
+    ret.error_code = GOOD;
+
+    return ret;
+}
+
+
+URet not_mikal(mikal_t **args, ...){
+    URet ret;
+
+    mikal_t *ret_mikal = URet_val(make_bool(BOOL_FALSE), mikal_t *);
+
+    mikal_t *arg1 = args[0];
+    
+    if(arg1->type != MT_BOOL){
+        ret.addr = ret_mikal;
+        ret.error_code = GOOD;
+    }else{
+        if(arg1->boolval == BOOL_TRUE){
+            ret_mikal->boolval = BOOL_FALSE;
+        }else{
+            ret_mikal->boolval = BOOL_TRUE;
+        }
+
+        ret.addr = ret_mikal;
         ret.error_code = GOOD;
     }
 

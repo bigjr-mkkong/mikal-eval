@@ -520,10 +520,7 @@ int mikal_cmp(mikal_t *val1, mikal_t *val2, struct env_t *env){
                 break;
 
             case MT_CONS:
-                /*
-                 * TODO
-                 * Implement mikal_cmp over (cons) type
-                 */
+                return mikal_cmp(val1->car, val2->car, env) & mikal_cmp(val1->cdr, val2->cdr, env);
                 break;
 
             default:

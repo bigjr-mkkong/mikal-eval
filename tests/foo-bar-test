@@ -10,4 +10,4 @@
         )
     )
 )
-(assert (= (foo 1) 1))
+(assert (=? (foo 1) 1))
