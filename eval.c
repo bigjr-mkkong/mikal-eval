@@ -51,6 +51,7 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
         struct env_t *new_env = URet_val(init_env(), struct env_t*);
         new_env->fa_env = env;
+        env->ref_cnt++;
 
         char *sym_str;
         mikal_t *sym, *val;
@@ -72,6 +73,7 @@ URet apply_env(mikal_t *op, struct AST_Node *root, struct env_t *env){
         }
 
         ret = op->func(NULL, exp_node, new_env);
+        destroy_env(new_env);
         
     }else{
         //should not be here
@@ -141,6 +143,7 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
 
             struct env_t *new_env = URet_val(init_env(), struct env_t*);
             new_env->fa_env = clos->env;
+            clos->env->ref_cnt++;
 
             int val_idx = 1;
             int sym_idx = 0;

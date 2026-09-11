@@ -58,7 +58,7 @@ URet make_symbol(char *sym_name){
     }
     
     mikal_t *ret = (mikal_t*)malloc(sizeof(mikal_t));
-    ret->sym = (char*)calloc(1, ROUND_UP(sizeof(name_len)));
+    ret->sym = (char*)calloc(1, name_len + 1);
     strcpy(ret->sym, sym_name);
     ret->type = MT_SYMBOL;
     ret->magic = MIKAL_MAGIC;
@@ -169,7 +169,7 @@ URet make_func(mikal_func func, enum mikal_op_type type, enum func_return return
     ret->op_type = type;
     ret->ret_type = return_type;
     ret->magic = MIKAL_MAGIC;
-    ret->refcnt++;
+    ret->refcnt = 1;
 
     retval.addr = ret;
     retval.error_code = GOOD;
@@ -457,10 +457,7 @@ URet destroy_mikal(mikal_t *target){
             }
 
             AST_destroy(tmp_clos->root);
-            tmp_clos->env->ref_cnt--;
-            if(tmp_clos->env->ref_cnt <= 1){
-                destroy_env(tmp_clos->env);
-            }
+            destroy_env(tmp_clos->env);
             
             free(target->clos);
             free(target);

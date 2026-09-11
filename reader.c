@@ -115,7 +115,7 @@ struct AST_Node *AST_Node_create(struct Token *tok, struct AST_Node **ops, int i
         new_node->ops[i] = NULL;
 
     if(tok != NULL)
-        memcpy(&(new_node->token), tok, sizeof(struct AST_Node));
+        memcpy(&(new_node->token), tok, sizeof(struct Token));
     
     memcpy(new_node->ops, ops, sizeof(void*) * 64);
     return new_node;

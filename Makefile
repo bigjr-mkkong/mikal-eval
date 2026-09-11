@@ -18,7 +18,7 @@ mikal: $(OBJS)
 	$(CC) -c $(CFLAGS) $*.c
 
 tests: all
-	cd tests && python testall.py --ans-test
+	python3 tests/testall.py
 
 clean:
 	rm -f *.o run

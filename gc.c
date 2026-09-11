@@ -75,7 +75,7 @@ void gc_clear_all(){
 }
 
 void destroy_gcbuffer(){
-    gc_clear_all(gcbuf);
+    gc_clear_all();
 
     free(gcbuf.mikal_gc);
 

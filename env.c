@@ -75,13 +75,13 @@ void destroy_env(struct env_t *env){
      * its not elegant, gonna try to came out another solution
      */
     if(env->fa_env == env) return; 
-    if(env->ref_cnt > 1){
-        env->ref_cnt--;
+    if(--env->ref_cnt > 0){
         return;
     }
     for(int i=0; i<env->next; i++){
         free_env_slot(env, i);
     }
+    if(env->fa_env) destroy_env(env->fa_env);
     free(env);
 }
 

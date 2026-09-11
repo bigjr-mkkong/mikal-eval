@@ -404,25 +404,14 @@ URet remainder_mikal(mikal_t **args, ...){
 }
 
 URet assert_mikal(mikal_t **args, ...){
-    URet ret;
-
-    mikal_t *ret_mikal = URet_val(make_bool(BOOL_TRUE), mikal_t *);
-
     mikal_t *arg1 = args[0];
-    
-    if(arg1->type != MT_BOOL){
-        ret.addr = arg1;
-        ret.error_code = GOOD;
-    }else if(arg1->boolval == BOOL_FALSE){
+
+    if(arg1 && arg1->type == MT_BOOL && arg1->boolval == BOOL_FALSE){
         fprintf(stderr, "assertion failed\n");
-        _exit(0);
-    }else{
-        ret.addr = arg1;
-        ret.error_code = GOOD;
+        _exit(1);
     }
 
-    return ret;
-
+    return copy_mikal(arg1);
 }
 
 URet help_mikal(mikal_t **args, ...){
