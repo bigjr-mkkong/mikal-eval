@@ -1,0 +1,11 @@
+(define loop (lambda (n) (if (=? n 0) 0 (loop (- n 1)))))
+(loop 20000)
+
+(define even (lambda (n) (if (=? n 0) 1 (odd (- n 1)))))
+(even 1000)
+
+(define forward (lambda (f x) (f x)))
+(forward (lambda (x) (+ x 1)) 41)
+
+(define swap (lambda (a b) ((lambda (a b) (- a b)) b a)))
+(swap 3 10)

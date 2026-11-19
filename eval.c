@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "mikal_type.h"
+#include "assert.h"
 #include "reader.h"
 #include "env.h"
 #include "gc.h"
@@ -140,32 +142,38 @@ URet apply(mikal_t *op, struct AST_Node *root, struct env_t *env){
             break;
         case MT_CLOSURE:
             struct closure *clos = op->clos;
+            int argc = 0;
+            int paramc = 0;
+
+            while(argc < MAX_CHILD - 1 && root->ops[argc + 1]) argc++;
+            while(paramc < MAX_PROCARGS && clos->args[paramc]) paramc++;
+            add_gc_mikal(op);
+            if(argc != paramc)
+                goto apply_Failed;
+
+            for(int i = 0; i < argc; i++){
+                ret = eval(root->ops[i + 1], env);
+                if(URet_state(ret) != GOOD)
+                    goto apply_Failed;
+                subexp[i] = URet_val(ret, mikal_t*);
+                add_gc_mikal(subexp[i]);
+            }
 
             struct env_t *new_env = URet_val(init_env(), struct env_t*);
             new_env->fa_env = clos->env;
             clos->env->ref_cnt++;
-
-            int val_idx = 1;
-            int sym_idx = 0;
-            for(; val_idx<MAX_PROCARGS && root->ops[val_idx]; val_idx++){
-                ret = eval(root->ops[val_idx], env);
-                if(URet_state(ret) != GOOD)
+            for(int i = 0; i < argc; i++){
+                ret = add_env_entry(new_env, clos->args[i], subexp[i]);
+                if(URet_state(ret) != GOOD){
+                    destroy_env(new_env);
                     goto apply_Failed;
-
-                subexp[val_idx-1] = URet_val(ret, mikal_t*);
-                add_gc_mikal(subexp[val_idx-1]);
+                }
             }
 
-            for(; sym_idx<MAX_PROCARGS && clos->args[sym_idx]; sym_idx++){
-                add_env_entry(new_env, clos->args[sym_idx], subexp[sym_idx]);
-            }
-            
-            call_ret = eval(clos->root, new_env);
-            
-            destroy_env(new_env);
-            add_gc_mikal(op);
+            // Return bindings so eval can enter the closure body without recursion.
+            call_ret.addr = new_env;
+            call_ret.error_code = GOOD;
             break;
-
         default:
            call_ret.val = 0;
            call_ret.error_code = E_CASE_UNIMPL;
@@ -262,51 +270,72 @@ URet eval(struct AST_Node *root, struct env_t *env){
     URet ret;
     mikal_t *operation;
     mikal_t *tmp_eval;
+    struct AST_Node *cur_root = root;
+    struct env_t *cur_env = env;
 
-    if(is_leafnode(root)){
-        char *tokstr = root->token.tok;
-        ret = self_eval(tokstr, env);
-        return ret;
-    }
+    int tco_flag = 0;
 
-    ret = eval(root->ops[0], env);
-    if(URet_state(ret) != GOOD)
-        goto eval_Failed;
-
-    operation = URet_val(ret, mikal_t*);
-
-    if(operation->type != MT_FUNC && operation->type != MT_CLOSURE){
-        ret.val = 0;
-        ret.error_code = E_FAILED;
-        goto eval_Failed;
-    }
-    
-    int eval_idx = 1;
-    if(operation->op_type == OP_IF){
-        ret = eval(root->ops[1], env);
-        tmp_eval = URet_val(ret, mikal_t*);
-        if(tmp_eval->type != MT_BOOL)
-            goto eval_Failed;
-
-        add_gc_mikal(tmp_eval);
-        add_gc_mikal(operation);
-        if(tmp_eval->boolval == BOOL_TRUE){
-            ret = eval(root->ops[2], env);
-        }else{
-            ret = eval(root->ops[3], env);
+    do {
+        tco_flag = 0;
+        if(is_leafnode(cur_root)){
+            char *tokstr = cur_root->token.tok;
+            ret = self_eval(tokstr, cur_env);
+            break;
         }
-    }else if(operation->op_type != OP_UNDEF){
-        ret = apply(operation, root, env);
+
+        ret = eval(cur_root->ops[0], cur_env);
         if(URet_state(ret) != GOOD)
             goto eval_Failed;
 
-        /* add_gc_mikal(operation); */
-    }else{
-        printf("%s is not defined as a procedure\n", operation->op);
-    }
+        operation = URet_val(ret, mikal_t*);
 
-    return ret;
+        if(operation->type != MT_FUNC && operation->type != MT_CLOSURE){
+            ret.val = 0;
+            ret.error_code = E_FAILED;
+            goto eval_Failed;
+        }
+
+        /* int eval_idx = 1; */
+        if(operation->op_type == OP_IF){
+            ret = eval(cur_root->ops[1], cur_env);
+            tmp_eval = URet_val(ret, mikal_t*);
+            if(tmp_eval->type != MT_BOOL)
+                goto eval_Failed;
+
+            add_gc_mikal(tmp_eval);
+            add_gc_mikal(operation);
+            if(tmp_eval->boolval == BOOL_TRUE){
+                /* ret = eval(cur_root->ops[2], env); */
+                cur_root = cur_root->ops[2];
+            }else{
+                /* ret = eval(cur_root->ops[3], env); */
+                cur_root = cur_root->ops[3];
+            }
+            tco_flag = 1;
+        }else if(operation->op_type != OP_UNDEF){
+            ret = apply(operation, cur_root, cur_env);
+            if(URet_state(ret) != GOOD)
+                goto eval_Failed;
+
+            if(operation->type == MT_CLOSURE){
+                //TCO: if it's a closure, loop back to beginning
+                if(cur_env != env)
+                    destroy_env(cur_env);
+
+                cur_env = URet_val(ret, struct env_t*);
+                cur_root = operation->clos->root;
+
+                tco_flag = 1;
+            }
+        }else{
+            printf("%s is not defined as a procedure\n", operation->op);
+        }
+
+    } while(tco_flag);
+
+
 eval_Failed:
+    if(cur_env != env) destroy_env(cur_env);
     return ret;
 
 }
